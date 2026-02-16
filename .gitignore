@@ -1,48 +1,49 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
-/node_modules
-/.pnp
-.pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
+*/node_modules
+*/.pnp
+*/.pnp.*
+*/.yarn/*
+*/!.yarn/patches
+*/!.yarn/plugins
+*/!.yarn/releases
+*/!.yarn/versions
 
 # testing
-/coverage
+*/coverage
 
 # next.js
-/.next/
-/out/
+*/.next/
+*/out/
 
 # production
-/build
+*/build
 
 # misc
-.DS_Store
+*/.DS_Store
 *.pem
 
 # debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
+*/npm-debug.log*
+*/yarn-debug.log*
+*/yarn-error.log*
+*/.pnpm-debug.log*
 
 # env files (can opt-in for committing if needed)
-.env*
+*/.env*
+!.env.local.example
 
 # vercel
-.vercel
+*/.vercel
 
 # typescript
-*.tsbuildinfo
-next-env.d.ts
+*/.tsbuildinfo
+*/next-env.d.ts
 
 # supabase (when using Supabase CLI / local dev)
-supabase/.branches
-supabase/.temp
+*/supabase/.branches
+*/supabase/.temp
 
 # optional: uncomment if you don't want to commit editor config
 # .vscode/
