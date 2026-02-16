@@ -2,11 +2,11 @@ import { updateSession } from "@/lib/supabase/proxy";
 import { type NextRequest } from "next/server";
 
 export async function proxy(request: NextRequest) {
-  return await updateSession(request);
+	return await updateSession(request);
 }
 
 export const config = {
-  matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
-  ],
+	// Only run on routes that need session refresh or auth protection.
+	// Add new protected or auth-related paths here when you add them.
+	matcher: ["/", "/login", "/signup", "/dashboard", "/auth/:path*"],
 };
