@@ -1,6 +1,6 @@
-import { login } from "@/app/actions";
+import { requestPasswordReset } from "@/app/actions";
 
-export default async function LoginPage({
+export default async function ForgotPasswordPage({
   searchParams,
 }: {
   searchParams: Promise<{ error?: string; message?: string }>;
@@ -12,10 +12,10 @@ export default async function LoginPage({
       <div className="w-full max-w-sm space-y-6 px-4">
         <div className="space-y-2 text-center">
           <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
-            Log in
+            Reset your password
           </h1>
           <p className="text-sm text-zinc-500 dark:text-zinc-400">
-            Enter your email and password to sign in
+            Enter your email and we&apos;ll send you a reset link
           </p>
         </div>
 
@@ -37,37 +37,11 @@ export default async function LoginPage({
             />
           </div>
 
-          <div className="space-y-2">
-            <label
-              htmlFor="password"
-              className="text-sm font-medium text-zinc-700 dark:text-zinc-300"
-            >
-              Password
-            </label>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              required
-              className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 placeholder-zinc-400 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50 dark:placeholder-zinc-500"
-              placeholder="Your password"
-            />
-          </div>
-
-          <div className="flex justify-end">
-            <a
-              href="/forgot-password"
-              className="text-sm font-medium text-zinc-900 hover:underline dark:text-zinc-50"
-            >
-              Forgot password?
-            </a>
-          </div>
-
           <button
-            formAction={login}
+            formAction={requestPasswordReset}
             className="w-full rounded-md bg-zinc-900 px-3 py-2 text-sm font-medium text-white hover:bg-zinc-800 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
           >
-            Log in
+            Send reset link
           </button>
         </form>
 
@@ -83,12 +57,12 @@ export default async function LoginPage({
         )}
 
         <p className="text-center text-sm text-zinc-500 dark:text-zinc-400">
-          Don&apos;t have an account?{" "}
+          Remember your password?{" "}
           <a
-            href="/signup"
+            href="/login"
             className="font-medium text-zinc-900 hover:underline dark:text-zinc-50"
           >
-            Sign up
+            Log in
           </a>
         </p>
       </div>

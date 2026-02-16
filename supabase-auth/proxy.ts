@@ -8,5 +8,5 @@ export async function proxy(request: NextRequest) {
 export const config = {
 	// Only run on routes that need session refresh or auth protection.
 	// Add new protected or auth-related paths here when you add them.
-	matcher: ["/", "/login", "/signup", "/dashboard", "/auth/:path*"],
+	matcher: ["/", "/login", "/signup", "/dashboard", "/auth/:path*", "/forgot-password", "/update-password"],
 };
