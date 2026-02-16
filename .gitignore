@@ -39,3 +39,11 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# supabase (when using Supabase CLI / local dev)
+supabase/.branches
+supabase/.temp
+
+# optional: uncomment if you don't want to commit editor config
+# .vscode/
+# .idea/

@@ -36,6 +36,17 @@ A minimal, cloneable boilerplate for Next.js 16 with Supabase email/password aut
 └── .env.local.example           # Environment variable template
 ```
 
+### Key files
+
+| Path                        | Purpose                                                                                                                                            |
+| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `proxy.ts` (root)           | Next.js 16 proxy; runs session refresh and route checks. Matcher limits which paths run through it.                                                |
+| `lib/supabase/proxy.ts`     | `updateSession()` – creates server client, calls `getClaims()` to refresh session, redirects unauthenticated users to `/login` on protected paths. |
+| `lib/supabase/server.ts`    | Server Supabase client (used in Server Components and server actions).                                                                             |
+| `lib/supabase/client.ts`    | Browser Supabase client (for client components if needed).                                                                                         |
+| `app/auth/confirm/route.ts` | GET handler for email confirmation links (`token_hash` + `type`); supports `?next=` for redirect after confirm.                                     |
+| `app/actions.ts`            | Server actions: `login`, `signup`, `signout`.                                                                                                      |
+
 ## Getting Started
 
 ### Option A: Clone This Template
@@ -136,7 +147,7 @@ This is critical — without the proxy, server-side Supabase clients won't have 
 
 **All other routes** are protected — unauthenticated users are redirected to `/login`.
 
-To change which routes are public, edit `lib/supabase/proxy.ts`:
+When you add new protected or auth-related routes (e.g. `/settings`, `/account`), add them to the **matcher** array in root `proxy.ts` so the proxy runs on those paths. To change which routes are considered public (no redirect), edit `lib/supabase/proxy.ts`:
 
 ```ts
 // In the updateSession() function, modify these conditions:
@@ -252,3 +263,10 @@ const { data: posts } = await supabase.from("posts").select("*");
 ```
 
 See the [Supabase docs](https://supabase.com/docs) for more on database, storage, and realtime features.
+
+### Optional next steps
+
+- **Forgot password** – add a page that calls `resetPasswordForEmail()` and use `/auth/confirm` (or a dedicated route) for the reset link.
+- **Better errors** – map Supabase `error.code` / `error.message` to user-facing messages on login/signup.
+- **Email redirect** – set `emailRedirectTo` in `signUp()` and `resetPasswordForEmail()` so confirmation/reset links point at your app.
+- **OAuth** – see [Add OAuth Providers](#add-oauth-providers) above for Google, GitHub, etc.
