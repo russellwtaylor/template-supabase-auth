@@ -13,7 +13,24 @@ export async function login(formData: FormData) {
   });
 
   if (error) {
-    redirect("/login?error=Could not authenticate user");
+    console.error("Login error:", error);
+
+    let errorMessage = "Could not authenticate user";
+
+    // Map Supabase error messages to user-friendly messages
+    if (error.message.includes("Invalid login credentials")) {
+      errorMessage = "Invalid email or password";
+    } else if (error.message.includes("Email not confirmed")) {
+      errorMessage = "Please verify your email address before logging in";
+    } else if (error.message.includes("Email rate limit exceeded")) {
+      errorMessage = "Too many login attempts. Please try again later";
+    } else if (error.message.includes("User not found")) {
+      errorMessage = "No account found with this email";
+    } else if (error.message.includes("Invalid email")) {
+      errorMessage = "Please enter a valid email address";
+    }
+
+    redirect(`/login?error=${encodeURIComponent(errorMessage)}`);
   }
 
   revalidatePath("/", "layout");
@@ -29,7 +46,26 @@ export async function signup(formData: FormData) {
   });
 
   if (error) {
-    redirect("/signup?error=Could not create user");
+    console.error("Signup error:", error);
+
+    let errorMessage = "Could not create user";
+
+    // Map Supabase error messages to user-friendly messages
+    if (error.message.includes("User already registered")) {
+      errorMessage = "An account with this email already exists";
+    } else if (error.message.includes("Password should be at least")) {
+      errorMessage = "Password must be at least 6 characters long";
+    } else if (error.message.includes("invalid format") || error.message.includes("Invalid email")) {
+      errorMessage = "Please enter a valid email address";
+    } else if (error.message.includes("Email rate limit exceeded")) {
+      errorMessage = "Too many signup attempts. Please try again later";
+    } else if (error.message.includes("Signups not allowed")) {
+      errorMessage = "Account creation is currently disabled";
+    } else if (error.message.includes("Password is too weak")) {
+      errorMessage = "Please choose a stronger password";
+    }
+
+    redirect(`/signup?error=${encodeURIComponent(errorMessage)}`);
   }
 
   revalidatePath("/", "layout");
