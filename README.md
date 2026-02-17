@@ -1,22 +1,30 @@
 # Supabase Auth + Next.js Boilerplate
 
-A minimal, cloneable boilerplate for Next.js 16 with Supabase email/password authentication. Use it as a starting point for new projects or as a reference for adding auth to an existing app.
+A minimal, cloneable boilerplate for Next.js 16 with Supabase authentication. Includes email/password auth, Google OAuth, password reset, a full profile management page, and TOTP two-factor authentication — all wired up and ready to extend.
 
 ## Tech Stack
 
 - [Next.js 16](https://nextjs.org/) (App Router, Turbopack)
 - [React 19](https://react.dev/)
-- [Supabase](https://supabase.com/) (Auth)
+- [Supabase](https://supabase.com/) (Auth, Database, Storage)
 - [Tailwind CSS v4](https://tailwindcss.com/)
 - TypeScript
 
 ## What's Included
 
-- Email/password sign up and login
-- Session management via proxy (automatic token refresh)
-- Protected routes (unauthenticated users redirected to `/login`)
-- Email confirmation callback handler
-- Server actions for auth (no client-side JavaScript required for forms)
+- ✅ Email/password sign up and login
+- ✅ **Google OAuth authentication** (sign in/up with Google) — [Setup Guide](#google-oauth-setup-guide)
+- ✅ Password reset flow with email verification
+- ✅ Session management via proxy (automatic token refresh)
+- ✅ Protected routes (unauthenticated users redirected to `/login`)
+- ✅ Email confirmation callback handler
+- ✅ OAuth callback handler for third-party auth
+- ✅ Server actions for auth (no client-side JavaScript required for forms)
+- ✅ Input validation and user-friendly error messages
+- ✅ Security best practices (`getUser()` for auth verification, input validation)
+- ✅ **Profile management** — update display name, email, avatar, phone number — [Setup Guide](#profile-management-setup)
+- ✅ **Avatar upload** — Supabase Storage with per-user folders and public CDN URLs
+- ✅ **TOTP two-factor authentication** — authenticator app enrollment, login challenge, and unenrollment — [Setup Guide](#totp-2fa-setup)
 
 ## File Structure
 
@@ -27,25 +35,45 @@ A minimal, cloneable boilerplate for Next.js 16 with Supabase email/password aut
 │   ├── server.ts                # Server client (for server components/actions)
 │   └── proxy.ts                 # updateSession() helper for the proxy
 ├── app/
-│   ├── actions.ts               # Server actions: login, signup, signout
-│   ├── page.tsx                 # Landing page
-│   ├── login/page.tsx           # Login form
-│   ├── signup/page.tsx          # Signup form
-│   ├── dashboard/page.tsx       # Protected page (requires auth)
-│   └── auth/confirm/route.ts    # Email confirmation callback
-└── .env.local.example           # Environment variable template
+│   ├── actions.ts                        # Server actions: login, signup, signout, profile, MFA, etc.
+│   ├── components/
+│   │   ├── google-auth-button.tsx        # Google OAuth login button (client component)
+│   │   ├── avatar-upload.tsx             # Avatar upload with Storage (client component)
+│   │   ├── mfa-challenge.tsx             # TOTP code entry for login (client component)
+│   │   └── totp-manager.tsx              # TOTP enrollment/unenrollment UI (client component)
+│   ├── page.tsx                          # Landing page
+│   ├── login/page.tsx                    # Login form (with Google OAuth)
+│   ├── signup/page.tsx                   # Signup form (with Google OAuth)
+│   ├── dashboard/page.tsx                # Protected page (requires auth)
+│   ├── forgot-password/page.tsx          # Password reset request form
+│   ├── update-password/page.tsx          # New password entry form
+│   ├── profile/
+│   │   ├── page.tsx                      # Profile management page (name, email, avatar, phone, 2FA)
+│   │   └── totp/page.tsx                 # TOTP enrollment/management page
+│   ├── mfa/page.tsx                      # MFA login challenge page (post-login TOTP verification)
+│   └── auth/
+│       ├── confirm/route.ts              # Email confirmation callback
+│       ├── callback/route.ts             # OAuth callback handler
+│       └── reset-password/route.ts       # Password reset verification callback
+└── .env.local.example                    # Environment variable template
 ```
 
 ### Key files
 
-| Path                        | Purpose                                                                                                                                            |
-| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `proxy.ts` (root)           | Next.js 16 proxy; runs session refresh and route checks. Matcher limits which paths run through it.                                                |
-| `lib/supabase/proxy.ts`     | `updateSession()` – creates server client, calls `getClaims()` to refresh session, redirects unauthenticated users to `/login` on protected paths. |
-| `lib/supabase/server.ts`    | Server Supabase client (used in Server Components and server actions).                                                                             |
-| `lib/supabase/client.ts`    | Browser Supabase client (for client components if needed).                                                                                         |
-| `app/auth/confirm/route.ts` | GET handler for email confirmation links (`token_hash` + `type`); supports `?next=` for redirect after confirm.                                     |
-| `app/actions.ts`            | Server actions: `login`, `signup`, `signout`.                                                                                                      |
+| Path | Purpose |
+| ---- | ------- |
+| `proxy.ts` (root) | Next.js 16 proxy; runs session refresh and route checks. Matcher limits which paths run through it. |
+| `lib/supabase/proxy.ts` | `updateSession()` – creates server client, calls `getUser()` to verify session, redirects unauthenticated users to `/login` on protected paths. |
+| `lib/supabase/server.ts` | Server Supabase client (used in Server Components and server actions). |
+| `lib/supabase/client.ts` | Browser Supabase client (for client components, used by OAuth and MFA flows). |
+| `app/actions.ts` | Server actions: `login`, `signup`, `signout`, `requestPasswordReset`, `updatePassword`, `updateProfile`, `updateEmail`, `updatePhone`, `updateAvatar`, `sendPasswordReset`. |
+| `app/components/google-auth-button.tsx` | Google OAuth login button component; handles OAuth flow with `signInWithOAuth()`. |
+| `app/components/avatar-upload.tsx` | Client component; validates file size, uploads to Supabase Storage, calls `updateAvatar` server action. |
+| `app/components/mfa-challenge.tsx` | Client component; `listFactors` → `challenge` → `verify` → redirect to `/dashboard`. Used on the `/mfa` page after password login. |
+| `app/components/totp-manager.tsx` | Client component; handles TOTP enrollment (QR code display), code verification, and unenrollment with confirmation. |
+| `app/auth/confirm/route.ts` | GET handler for email confirmation links (`token_hash` + `type`); supports `?next=` for redirect after confirm. |
+| `app/auth/callback/route.ts` | GET handler for OAuth callbacks; exchanges code for session and redirects to dashboard. |
+| `app/auth/reset-password/route.ts` | GET handler for password reset links; supports multiple auth flows (PKCE, token hash, session-based). |
 
 ## Getting Started
 
@@ -95,31 +123,93 @@ cp .env.local.example .env.local
 
 Find your credentials in your Supabase project under **Settings > API**:
 
-| Variable                               | Where to find it                                                                                 |
-| -------------------------------------- | ------------------------------------------------------------------------------------------------ |
-| `NEXT_PUBLIC_SUPABASE_URL`             | Project URL (e.g. `https://abc123.supabase.co`)                                                  |
-| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Publishable key under API Keys. For older projects, use your `anon` key — it works the same way. |
+| Variable | Where to find it | Required for |
+| -------- | ---------------- | ------------ |
+| `NEXT_PUBLIC_SUPABASE_URL` | Project URL (e.g. `https://abc123.supabase.co`) | All features |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Publishable key under API Keys. For older projects, use your `anon` key — it works the same way. | All features |
+| `NEXT_PUBLIC_SITE_URL` | Your app's URL (e.g. `http://localhost:3000` for local dev, `https://myapp.com` for production) | Password reset, avatar upload |
 
 ### 3. Configure Supabase Auth
 
-In your Supabase dashboard, go to **Authentication > URL Configuration** and set:
+In your Supabase dashboard, configure authentication settings:
 
-- **Site URL**: `http://localhost:3000` (or your production URL)
-- **Redirect URLs**: Add `http://localhost:3000/**` (allows all local callback paths)
+#### A. URL Configuration
 
-For production, add your deployed URL to the redirect allowlist as well (e.g. `https://myapp.com/**`).
+Go to **Authentication > URL Configuration** and set:
 
-### 4. Configure Email Templates (Optional)
+- **Site URL**: `http://localhost:3000` (for local development)
+  - For production, change this to your deployed URL (e.g. `https://myapp.com`)
+- **Redirect URLs**: Add the following URLs to the allowlist:
+  - `http://localhost:3000/**` (allows all local callback paths)
+  - `http://localhost:3000/auth/reset-password` (password reset callback)
+  - For production, add your production URLs as well (e.g. `https://myapp.com/**`)
 
-By default, Supabase sends a confirmation email with a link like:
+#### B. Email Auth Settings
 
+Go to **Authentication > Providers** and ensure **Email** is enabled:
+
+- ✅ Enable email provider
+- ✅ Confirm email (recommended for production)
+- Set **Minimum Password Length** to `6` or higher
+
+#### C. Email Rate Limiting (Optional)
+
+Go to **Authentication > Rate Limits** to prevent abuse:
+
+- Set rate limits for signup, login, and password reset requests
+- Recommended: 5-10 requests per hour per IP for sensitive operations
+
+### 4. Configure Email Templates (Recommended)
+
+Go to **Authentication > Email Templates** in the Supabase dashboard and update the templates for better security and consistency.
+
+#### Confirm signup template:
+
+```html
+<h2>Confirm your signup</h2>
+
+<p>Follow this link to confirm your email:</p>
+<p><a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email">Confirm your email</a></p>
 ```
-{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email
+
+#### Reset Password template:
+
+**Option 1: Token Hash (Recommended)** - More explicit control and better error handling:
+
+```html
+<h2>Reset Password</h2>
+
+<p>Follow this link to reset your password:</p>
+<p><a href="{{ .SiteURL }}/auth/reset-password?token_hash={{ .TokenHash }}&type=recovery">Reset Password</a></p>
 ```
 
-If you've customized your email templates, make sure the confirmation link points to `/auth/confirm` with `token_hash` and `type` query params. You can configure this under **Authentication > Email Templates** in the Supabase dashboard.
+**Option 2: Confirmation URL** - Simpler but less control:
 
-### 5. Install and Run
+```html
+<h2>Reset Password</h2>
+
+<p>Follow this link to reset your password:</p>
+<p><a href="{{ .ConfirmationURL }}">Reset Password</a></p>
+```
+
+The token hash approach is recommended because it:
+- Gives you explicit control over the URL structure
+- Provides better error handling capabilities
+- Is consistent with the email confirmation flow
+
+### 5. Set Up Profile Management (Required for profile page and avatars)
+
+See the full [Profile Management Setup](#profile-management-setup) section for SQL and Storage configuration.
+
+### 6. Set Up TOTP Two-Factor Authentication (Optional)
+
+See the [TOTP 2FA Setup](#totp-2fa-setup) section.
+
+### 7. Configure Google OAuth (Optional but Recommended)
+
+Google OAuth allows users to sign in with their Google account. Follow the detailed setup guide in the [Google OAuth Setup](#google-oauth-setup-guide) section below.
+
+### 8. Install and Run
 
 ```bash
 npm install
@@ -128,6 +218,129 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000).
 
+---
+
+## Profile Management Setup
+
+The `/profile` page lets users update their display name, email address, phone number, and avatar, and send themselves a password reset link. It requires a `profiles` table in Supabase and a Storage bucket for avatars.
+
+### Step 1: Run the SQL Migration
+
+In **Supabase Dashboard → SQL Editor**, run:
+
+```sql
+create table public.profiles (
+  id uuid references auth.users on delete cascade not null primary key,
+  full_name text,
+  avatar_url text,
+  phone text,
+  updated_at timestamp with time zone
+);
+
+alter table public.profiles enable row level security;
+
+create policy "Users can view own profile"
+  on public.profiles for select using (auth.uid() = id);
+
+create policy "Users can update own profile"
+  on public.profiles for update using (auth.uid() = id);
+
+create policy "Users can insert own profile"
+  on public.profiles for insert with check (auth.uid() = id);
+
+-- Auto-create a profile row whenever a new user signs up
+create or replace function public.handle_new_user()
+returns trigger as $$
+begin
+  insert into public.profiles (id) values (new.id);
+  return new;
+end;
+$$ language plpgsql security definer;
+
+create trigger on_auth_user_created
+  after insert on auth.users
+  for each row execute procedure public.handle_new_user();
+```
+
+### Step 2: Create the Avatars Storage Bucket
+
+1. In **Supabase Dashboard → Storage**, click **"New bucket"**
+2. Name it `avatars`, toggle it **Public**, click **Save**
+
+Then in **SQL Editor**, add the storage policies:
+
+```sql
+create policy "Authenticated users can upload avatars"
+  on storage.objects for insert to authenticated
+  with check (bucket_id = 'avatars' and auth.uid()::text = (storage.foldername(name))[1]);
+
+create policy "Authenticated users can update own avatar"
+  on storage.objects for update to authenticated
+  using (bucket_id = 'avatars' and auth.uid()::text = (storage.foldername(name))[1]);
+
+create policy "Avatars are publicly viewable"
+  on storage.objects for select to public
+  using (bucket_id = 'avatars');
+```
+
+### Verification
+
+1. Run the SQL → confirm `profiles` table appears in Supabase Table Editor
+2. Sign up a new test user → confirm a row auto-appears in `profiles` (trigger worked)
+3. Visit `/profile` while logged in → page loads with email pre-filled
+4. Update display name → confirm it persists on page refresh
+5. Upload an avatar → confirm image appears and persists after refresh
+
+---
+
+## TOTP 2FA Setup
+
+TOTP (Time-based One-Time Password) lets users secure their account with an authenticator app (Google Authenticator, Authy, 1Password, etc.). No SMS or additional dependencies needed — Supabase handles the QR code and secret generation.
+
+### Step 1: Enable MFA in Supabase
+
+1. Go to **Supabase Dashboard → Authentication → MFA**
+2. Toggle **TOTP** to **Enabled**
+3. Save
+
+### How It Works
+
+**Enrollment** (from `/profile/totp`):
+1. User clicks "Enable two-factor authentication"
+2. A QR code is displayed (generated by Supabase's `mfa.enroll()`)
+3. User scans with their authenticator app, or manually enters the setup key
+4. User enters the 6-digit code to confirm — triggers `mfa.challenge()` + `mfa.verify()`
+5. TOTP factor is marked verified; 2FA is now active
+
+**Login with 2FA**:
+1. User logs in with email + password
+2. `login` server action checks `mfa.getAuthenticatorAssuranceLevel()`
+3. If `nextLevel === 'aal2'`, user is redirected to `/mfa` instead of `/dashboard`
+4. User enters 6-digit code → `mfa.challenge()` + `mfa.verify()` → redirected to `/dashboard`
+
+**Disabling 2FA** (from `/profile/totp`):
+1. User clicks "Disable two-factor authentication"
+2. User enters current 6-digit code to confirm
+3. `mfa.challenge()` + `mfa.verify()` elevates session to AAL2
+4. `mfa.unenroll()` removes the factor
+
+### A Note on AAL Enforcement
+
+The current proxy only checks that a session exists — it does not enforce that users with 2FA enrolled must be at AAL2 to access protected routes. In the normal login flow, users with TOTP are always redirected through `/mfa`, but a user who bypasses login (e.g. via a direct URL) could still access routes at AAL1.
+
+To enforce AAL2 on all protected routes, add an AAL check to `lib/supabase/proxy.ts`:
+
+```ts
+const { data: aalData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+if (user && aalData?.nextLevel === 'aal2' && aalData?.currentLevel !== 'aal2') {
+  const url = request.nextUrl.clone();
+  url.pathname = '/mfa';
+  return NextResponse.redirect(url);
+}
+```
+
+---
+
 ## How Auth Works
 
 ### Session Management
@@ -135,17 +348,21 @@ Open [http://localhost:3000](http://localhost:3000).
 The root `proxy.ts` runs on every request. It calls `updateSession()` which:
 
 1. Creates a Supabase client using cookies from the request
-2. Calls `getClaims()` to refresh the session token
+2. Calls `getUser()` to verify the session with Supabase servers
 3. Writes updated cookies back to the response
 4. Redirects unauthenticated users away from protected routes
+
+**Security Note:** This implementation uses `getUser()` instead of `getClaims()` for route protection. According to [Supabase best practices](https://supabase.com/docs/guides/auth/server-side/nextjs), `getUser()` validates the session with Supabase auth servers on every request, while `getClaims()` only performs local JWT validation and doesn't verify if the session is still valid.
 
 This is critical — without the proxy, server-side Supabase clients won't have valid sessions and users may be randomly logged out.
 
 ### Public vs. Protected Routes
 
-**Public routes** (no auth required): `/`, `/login`, `/signup`, `/auth/*`
+**Public routes** (no auth required): `/`, `/login`, `/signup`, `/forgot-password`, `/auth/*`
 
-**All other routes** are protected — unauthenticated users are redirected to `/login`.
+**Protected routes** (auth required): `/dashboard`, `/profile`, `/profile/totp`, `/mfa`, `/update-password`, and all other routes not explicitly listed as public.
+
+Unauthenticated users attempting to access protected routes are automatically redirected to `/login`.
 
 When you add new protected or auth-related routes (e.g. `/settings`, `/account`), add them to the **matcher** array in root `proxy.ts` so the proxy runs on those paths. To change which routes are considered public (no redirect), edit `lib/supabase/proxy.ts`:
 
@@ -175,11 +392,45 @@ if (
 
 1. User submits the login form at `/login`
 2. The `login` server action calls `supabase.auth.signInWithPassword()`
-3. On success, the user is redirected to `/dashboard`
+3. After success, `mfa.getAuthenticatorAssuranceLevel()` is checked
+   - If the user has TOTP enabled (`nextLevel === 'aal2'`), they are redirected to `/mfa`
+   - Otherwise, they go directly to `/dashboard`
+
+### MFA Login Flow
+
+1. User arrives at `/mfa` after password login
+2. The `MfaChallenge` client component calls `mfa.listFactors()` to find their TOTP factor
+3. `mfa.challenge()` creates a new challenge for the factor
+4. User enters their 6-digit code; `mfa.verify()` confirms it and elevates session to AAL2
+5. User is redirected to `/dashboard`
 
 ### Sign Out
 
 The dashboard has a sign out button that calls the `signout` server action, which clears the session and redirects to `/login`.
+
+### Password Reset Flow
+
+1. User clicks "Forgot password?" on the login page → `/forgot-password`
+2. User enters their email and submits
+3. The `requestPasswordReset` server action calls `supabase.auth.resetPasswordForEmail()`
+4. Supabase sends a password reset email to the user
+5. User clicks the link in the email, which hits `/auth/reset-password`
+6. The route handler verifies the token and creates an authenticated session
+7. User is redirected to `/update-password` with `verified=true` query param
+8. User enters their new password and submits
+9. The `updatePassword` server action:
+   - Updates the password via `supabase.auth.updateUser()`
+   - Signs the user out (security best practice)
+   - Redirects to `/login` with a success message
+10. User logs in with their new password
+
+**Security features:**
+- Single-use reset tokens
+- Token expiration (default: 1 hour)
+- Forced sign-out after password change
+- No email enumeration (always shows success message even if email doesn't exist)
+
+---
 
 ## Extending
 
@@ -195,17 +446,19 @@ import { redirect } from "next/navigation";
 
 export default async function MyPage() {
 	const supabase = await createClient();
-	const { data, error } = await supabase.auth.getClaims();
+	const {
+		data: { user },
+	} = await supabase.auth.getUser();
 
-	if (error || !data?.claims) {
+	if (!user) {
 		redirect("/login");
 	}
 
-	const email = data.claims.email as string;
-
-	return <p>Hello, {email}</p>;
+	return <p>Hello, {user.email}</p>;
 }
 ```
+
+**Important:** Always use `getUser()` in Server Components and Server Actions to protect sensitive data. Never use `getClaims()` or `getSession()` for authorization checks, as they don't verify the session with Supabase servers.
 
 ### Access User Data in Client Components
 
@@ -230,29 +483,6 @@ export function UserGreeting() {
 }
 ```
 
-### Add OAuth Providers
-
-1. Enable providers in your Supabase dashboard under **Authentication > Providers**
-2. Add a button that calls `supabase.auth.signInWithOAuth()`:
-
-```tsx
-"use client";
-
-import { createClient } from "@/lib/supabase/client";
-
-export function GitHubLoginButton() {
-	const handleLogin = () => {
-		const supabase = createClient();
-		supabase.auth.signInWithOAuth({
-			provider: "github",
-			options: { redirectTo: `${location.origin}/auth/callback` },
-		});
-	};
-
-	return <button onClick={handleLogin}>Sign in with GitHub</button>;
-}
-```
-
 ### Query the Supabase Database
 
 The same Supabase client used for auth can query your database:
@@ -264,9 +494,348 @@ const { data: posts } = await supabase.from("posts").select("*");
 
 See the [Supabase docs](https://supabase.com/docs) for more on database, storage, and realtime features.
 
-### Optional next steps
+---
 
-- **Forgot password** – add a page that calls `resetPasswordForEmail()` and use `/auth/confirm` (or a dedicated route) for the reset link.
-- **Better errors** – map Supabase `error.code` / `error.message` to user-facing messages on login/signup.
-- **Email redirect** – set `emailRedirectTo` in `signUp()` and `resetPasswordForEmail()` so confirmation/reset links point at your app.
-- **OAuth** – see [Add OAuth Providers](#add-oauth-providers) above for Google, GitHub, etc.
+## Google OAuth Setup Guide
+
+This template includes Google OAuth authentication out of the box. Follow these steps to enable it.
+
+### Prerequisites
+
+- A Google account
+- Access to [Google Cloud Console](https://console.cloud.google.com/)
+- Your Supabase project already created
+
+### Part 1: Google Cloud Console Setup (~5 minutes)
+
+#### Step 1: Create a Google Cloud Project
+
+1. Navigate to [Google Cloud Console](https://console.cloud.google.com/)
+2. Click the project dropdown in the top navigation bar
+3. Click **"New Project"**
+   - Project name: Choose a name (e.g., "My App Authentication")
+   - Click **"Create"**
+4. Wait for the project to be created, then select it from the project dropdown
+
+#### Step 2: Configure OAuth Consent Screen
+
+1. In the left sidebar, navigate to **APIs & Services** → **OAuth consent screen**
+2. Choose **"External"** user type (unless you have Google Workspace, then choose "Internal")
+3. Click **"Create"**
+4. Fill in the required fields:
+   - **App name**: Your application name (e.g., "My Awesome App")
+   - **User support email**: Your email address
+   - **App logo**: (Optional) Upload your app logo
+   - **Application home page**: `http://localhost:3000` (update for production later)
+   - **Authorized domains**: (Leave empty for now, add your production domain later)
+   - **Developer contact information**: Your email address
+5. Click **"Save and Continue"**
+6. **Scopes** screen: Click **"Save and Continue"** (default scopes are fine)
+7. **Test users** screen (for External apps): Click **"Save and Continue"**
+8. **Summary** screen: Click **"Back to Dashboard"**
+
+#### Step 3: Create OAuth Credentials
+
+1. In the left sidebar, navigate to **APIs & Services** → **Credentials**
+2. Click **"Create Credentials"** → **"OAuth client ID"**
+3. Configure the OAuth client:
+   - **Application type**: Select **"Web application"**
+   - **Name**: Give it a descriptive name (e.g., "My App - Web Client")
+
+4. **Authorized JavaScript origins**: Click **"Add URI"** and add:
+   ```
+   http://localhost:3000
+   ```
+   _(For production, add your production URL like `https://yourdomain.com`)_
+
+5. **Authorized redirect URIs**: Click **"Add URI"** and add:
+   ```
+   https://YOUR_PROJECT_REF.supabase.co/auth/v1/callback
+   ```
+
+   **📋 How to find YOUR_PROJECT_REF:**
+   - Go to your [Supabase Dashboard](https://supabase.com/dashboard)
+   - Select your project
+   - Look at the browser URL or **Project Settings** → **API**
+   - Your Project URL looks like: `https://abcdefghijk.supabase.co`
+   - The project ref is the subdomain: `abcdefghijk`
+   - So your redirect URI would be: `https://abcdefghijk.supabase.co/auth/v1/callback`
+
+6. Click **"Create"**
+
+7. **Important!** A modal will appear with your credentials:
+   - **Client ID**: Copy this (looks like `123456789-abc123.apps.googleusercontent.com`)
+   - **Client Secret**: Copy this (looks like `GOCSPX-abc123xyz`)
+   - Click **"OK"** (you can always find these again in the Credentials page)
+
+#### Step 4: Note Your Credentials
+
+Keep these handy for the next step:
+- ✅ **Client ID**
+- ✅ **Client Secret**
+
+### Part 2: Supabase Dashboard Configuration (~2 minutes)
+
+#### Step 1: Enable Google Provider
+
+1. Go to your [Supabase Dashboard](https://supabase.com/dashboard)
+2. Select your project
+3. In the left sidebar, navigate to **Authentication** → **Providers**
+4. Scroll down to find **Google** in the provider list
+5. Toggle the **Google** provider to **Enabled** (ON)
+
+#### Step 2: Add Google OAuth Credentials
+
+1. In the Google provider settings, you'll see two fields:
+   - **Client ID (for OAuth)**: Paste the **Client ID** from Google Cloud Console
+   - **Client Secret (for OAuth)**: Paste the **Client Secret** from Google Cloud Console
+
+2. **Verify the Callback URL** shown on the page:
+   ```
+   https://YOUR_PROJECT_REF.supabase.co/auth/v1/callback
+   ```
+   This should match exactly what you entered in Google Cloud Console.
+
+3. Click **"Save"** at the bottom of the page
+
+#### Step 3: Verify Site URL (Important!)
+
+1. Still in Supabase Dashboard, navigate to **Authentication** → **URL Configuration**
+2. Verify **Site URL** is set to:
+   - Development: `http://localhost:3000`
+   - Production: `https://yourdomain.com`
+3. The **Redirect URLs** section should already include the wildcard pattern `http://localhost:3000/**`
+
+### Part 3: Test Google OAuth (~30 seconds)
+
+1. Open [http://localhost:3000/login](http://localhost:3000/login) in your browser
+2. Click the **"Continue with Google"** button
+3. Complete the Google OAuth flow
+4. You should be redirected to `/dashboard` with an authenticated session
+
+### Production Setup
+
+When deploying to production, update these settings:
+
+#### Google Cloud Console
+
+1. Go to **APIs & Services** → **Credentials**
+2. Edit your OAuth client
+3. Add your production URLs:
+   - **Authorized JavaScript origins**: Add `https://yourdomain.com`
+   - **Authorized redirect URIs**: Already has `https://YOUR_REF.supabase.co/auth/v1/callback`
+4. Save
+
+#### Supabase Dashboard
+
+1. Go to **Authentication** → **URL Configuration**
+2. Update **Site URL** to your production domain: `https://yourdomain.com`
+3. Add your production domain to **Redirect URLs**: `https://yourdomain.com/**`
+
+### How It Works
+
+1. User clicks "Continue with Google"
+2. `GoogleAuthButton` component calls `supabase.auth.signInWithOAuth()`
+3. User is redirected to Google's OAuth consent screen
+4. After approval, Google redirects to Supabase's callback URL
+5. Supabase verifies the OAuth code and creates a session
+6. Supabase redirects to your app's `/auth/callback` route
+7. The callback handler exchanges the code for a session
+8. User is redirected to `/dashboard` with authenticated session
+
+### Security Features
+
+- ✅ **PKCE flow** (Proof Key for Code Exchange) for enhanced security
+- ✅ **HTTP-only cookies** - Session tokens not accessible via JavaScript
+- ✅ **Server-side session validation** - Uses `getUser()` to verify with Supabase servers
+- ✅ **Email pre-verified** - Google-authenticated users don't need email confirmation
+- ✅ **Automatic token refresh** - Handled by middleware
+
+### Troubleshooting
+
+#### Error: "redirect_uri_mismatch"
+
+**Cause:** The redirect URI in your Google OAuth client doesn't match the one Supabase is using.
+
+**Solution:**
+1. Go to Google Cloud Console → Credentials
+2. Edit your OAuth client
+3. Verify the redirect URI is **exactly**: `https://YOUR_PROJECT_REF.supabase.co/auth/v1/callback`
+4. Note: It must be the Supabase URL, not your app's URL
+5. Save and try again
+
+#### Error: "Access blocked: This app's request is invalid"
+
+**Cause:** OAuth consent screen is not properly configured.
+
+**Solution:**
+1. Go to Google Cloud Console → **APIs & Services** → **OAuth consent screen**
+2. Verify all required fields are filled in
+3. Make sure the app is published (or you're added as a test user for External apps)
+
+#### Error: "OAuth provider is not enabled"
+
+**Cause:** Google provider is not enabled in Supabase or credentials are missing.
+
+**Solution:**
+1. Go to Supabase Dashboard → **Authentication** → **Providers**
+2. Verify Google is toggled ON
+3. Verify Client ID and Client Secret are saved
+4. Click "Save" again to ensure changes persist
+
+#### Google OAuth works locally but not in production
+
+**Cause:** Production URLs not configured in Google Cloud Console.
+
+**Solution:**
+1. Add your production domain to Google Cloud Console:
+   - Authorized JavaScript origins: `https://yourdomain.com`
+2. Update Supabase Site URL to production domain
+3. Clear your browser cache and try again
+
+### Add Other OAuth Providers (GitHub, Microsoft, etc.)
+
+The Google OAuth implementation can be easily extended to support other providers. Here's how:
+
+**Step 1: Enable the Provider in Supabase**
+
+1. Go to **Authentication** → **Providers** in your Supabase dashboard
+2. Find the provider you want (GitHub, Microsoft, Azure, etc.)
+3. Toggle it ON and configure the required credentials (similar to Google setup)
+
+**Step 2: Create an Auth Button Component**
+
+Create a new component similar to `GoogleAuthButton`. For example, for GitHub:
+
+```tsx
+// app/components/github-auth-button.tsx
+"use client";
+
+import { createClient } from "@/lib/supabase/client";
+
+export function GitHubAuthButton() {
+  const handleLogin = async () => {
+    const supabase = createClient();
+    await supabase.auth.signInWithOAuth({
+      provider: "github",
+      options: { redirectTo: `${location.origin}/auth/callback` },
+    });
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={handleLogin}
+      className="flex w-full items-center justify-center gap-3 rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50 dark:hover:bg-zinc-800"
+    >
+      {/* Add GitHub icon SVG here */}
+      Continue with GitHub
+    </button>
+  );
+}
+```
+
+**Step 3: Add the Button to Your Pages**
+
+Import and use the new button component in your login/signup pages, just like the `GoogleAuthButton`.
+
+**Note:** The existing `/auth/callback` route handler in your app already supports all OAuth providers — no code changes needed!
+
+---
+
+## Security Best Practices
+
+This template follows [Supabase's official security recommendations](https://supabase.com/docs/guides/auth/server-side/nextjs):
+
+### ✅ Implemented
+
+1. **Server-side session validation with `getUser()`**
+   - Never use `getClaims()` or `getSession()` for route protection
+   - `getUser()` validates with Supabase auth servers on every request
+   - Prevents stale or invalidated sessions from accessing protected data
+
+2. **Input validation on all server actions**
+   - Email format validation
+   - Password length requirements (minimum 6 characters)
+   - Phone number digit count validation
+   - Display name length cap
+   - Required field validation
+
+3. **User-friendly error messages**
+   - Maps Supabase error codes to clear, actionable messages
+   - No technical jargon exposed to users
+   - Detailed errors logged server-side for debugging
+
+4. **Secure password reset flow**
+   - Single-use tokens with expiration
+   - Forced sign-out after password change
+   - No email enumeration protection
+   - Multiple authentication flow support (PKCE, token hash, session-based)
+
+5. **Cookie-based session management**
+   - HTTP-only cookies (not localStorage)
+   - Automatic token refresh via middleware
+   - Server-side rendering support
+   - XSS protection
+
+6. **TOTP two-factor authentication**
+   - Authenticator app-based (no SMS required)
+   - Unenrollment requires verifying the current TOTP code (elevates to AAL2 first)
+   - Login checks assurance level and gates dashboard access behind `/mfa`
+
+7. **Avatar upload security**
+   - Files uploaded to per-user Storage folders (`{userId}/...`)
+   - RLS policies restrict upload/update to folder owner only
+   - File size validated client-side (max 2MB)
+   - Only PNG, JPEG, and WebP accepted
+
+### 📋 Recommended Additional Steps
+
+1. **Enable Row Level Security (RLS)** on all database tables
+   - Example policy:
+     ```sql
+     CREATE POLICY "Users can only access their own data"
+     ON your_table
+     FOR ALL
+     USING (auth.uid() = user_id);
+     ```
+
+2. **Set up rate limiting** in Supabase dashboard
+   - Limit login attempts per IP
+   - Limit signup requests per IP
+   - Limit password reset requests
+
+3. **Enable email confirmation** for production
+   - Go to **Authentication > Providers > Email**
+   - Toggle "Confirm email" to ON
+
+4. **Use environment-specific redirect URLs**
+   - Maintain separate allowlists for development and production
+   - Never allow wildcards in production
+
+5. **Enforce AAL2 for all protected routes** (if using TOTP 2FA)
+   - Add an assurance level check to `lib/supabase/proxy.ts` (see [TOTP 2FA Setup](#totp-2fa-setup))
+
+6. **Monitor authentication events**
+   - Set up logging for failed login attempts
+   - Alert on suspicious activity patterns
+
+7. **Implement CAPTCHA** for public forms (optional)
+   - Add to signup, login, and password reset forms
+   - Prevents automated abuse
+
+---
+
+## Optional Next Steps
+
+- ✅ **Password reset** – Already implemented
+- ✅ **Better error handling** – Already implemented with user-friendly messages
+- ✅ **Google OAuth** – Already implemented
+- ✅ **Profile management** – Already implemented (display name, email, phone, avatar)
+- ✅ **TOTP two-factor authentication** – Already implemented
+- **Additional OAuth providers** – Add GitHub, Microsoft, Twitter, etc. (see [Add Other OAuth Providers](#add-other-oauth-providers-github-microsoft-etc) above)
+- **Enforce AAL2 globally** – Add assurance level check to the proxy for stricter 2FA enforcement
+- **Session management** – Show users active sessions and allow them to revoke access
+- **Account deletion** – Allow users to permanently delete their account
+- **Magic link authentication** – Passwordless login via email links
+- **SMS 2FA** – Phone-based OTP (requires an SMS provider like Twilio configured in Supabase)

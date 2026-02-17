@@ -55,6 +55,12 @@ export async function login(formData: FormData) {
     redirect(`/login?error=${encodeURIComponent(errorMessage)}`);
   }
 
+  // Check if MFA verification is required
+  const { data: aalData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+  if (aalData?.nextLevel === "aal2" && aalData?.currentLevel !== "aal2") {
+    redirect("/mfa");
+  }
+
   revalidatePath("/", "layout");
   redirect("/dashboard");
 }
@@ -159,6 +165,205 @@ export async function requestPasswordReset(formData: FormData) {
 
   revalidatePath("/forgot-password", "page");
   redirect("/forgot-password?message=Check your email for a password reset link");
+}
+
+// Re-throw errors thrown by redirect() so Next.js can perform the redirect.
+// redirect() throws internally; catching it without re-throwing swallows the navigation.
+function rethrowIfRedirect(err: unknown): void {
+  if (
+    typeof err === "object" &&
+    err !== null &&
+    "digest" in err &&
+    typeof (err as { digest: string }).digest === "string" &&
+    (err as { digest: string }).digest.startsWith("NEXT_REDIRECT")
+  ) {
+    throw err;
+  }
+}
+
+export async function updateProfile(formData: FormData) {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      redirect("/login");
+    }
+
+    const full_name = (formData.get("full_name") as string)?.trim() ?? "";
+
+    if (full_name.length > 100) {
+      redirect(`/profile?nameError=${encodeURIComponent("Display name must be 100 characters or fewer")}`);
+    }
+
+    const { error } = await supabase.from("profiles").upsert({
+      id: user.id,
+      full_name,
+      updated_at: new Date().toISOString(),
+    });
+
+    if (error) {
+      console.error("Profile update error:", error);
+      redirect(`/profile?nameError=${encodeURIComponent("Could not update profile")}`);
+    }
+
+    redirect("/profile?message=Profile updated successfully");
+  } catch (err) {
+    rethrowIfRedirect(err);
+    console.error("Unexpected error in updateProfile:", err);
+    redirect(`/profile?nameError=${encodeURIComponent("An unexpected error occurred. Please try again.")}`);
+  }
+}
+
+export async function updateEmail(formData: FormData) {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      redirect("/login");
+    }
+
+    const email = formData.get("email") as string;
+
+    if (!email) {
+      redirect(`/profile?emailError=${encodeURIComponent("Email is required")}`);
+    }
+
+    if (!isValidEmail(email)) {
+      redirect(`/profile?emailError=${encodeURIComponent("Please enter a valid email address")}`);
+    }
+
+    const { error } = await supabase.auth.updateUser({ email });
+
+    if (error) {
+      console.error("Email update error:", error);
+
+      let errorMessage = "Could not update email";
+
+      if (error.message.includes("already registered") || error.message.includes("already in use")) {
+        errorMessage = "This email address is already in use";
+      } else if (error.message.includes("Email rate limit exceeded") || error.message.includes("rate limit")) {
+        errorMessage = "Too many requests. Please try again later.";
+      }
+
+      redirect(`/profile?emailError=${encodeURIComponent(errorMessage)}`);
+    }
+
+    redirect("/profile?message=Check your inbox to confirm your new email address");
+  } catch (err) {
+    rethrowIfRedirect(err);
+    console.error("Unexpected error in updateEmail:", err);
+    redirect(`/profile?emailError=${encodeURIComponent("An unexpected error occurred. Please try again.")}`);
+  }
+}
+
+export async function updateAvatar(avatarUrl: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return;
+  }
+
+  const { error } = await supabase.from("profiles").upsert({
+    id: user.id,
+    avatar_url: avatarUrl,
+    updated_at: new Date().toISOString(),
+  });
+
+  if (error) {
+    console.error("Avatar update error:", error);
+  }
+
+  revalidatePath("/profile", "page");
+}
+
+export async function updatePhone(formData: FormData) {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      redirect("/login");
+    }
+
+    const raw = (formData.get("phone") as string)?.trim() ?? "";
+
+    // Allow clearing the phone number
+    if (raw !== "") {
+      // Strip formatting characters and count digits
+      const digits = raw.replace(/\D/g, "");
+      if (digits.length < 7 || digits.length > 15) {
+        redirect(`/profile?phoneError=${encodeURIComponent("Please enter a valid phone number (7\u201315 digits)")}`);
+      }
+    }
+
+    const { error } = await supabase.from("profiles").upsert({
+      id: user.id,
+      phone: raw || null,
+      updated_at: new Date().toISOString(),
+    });
+
+    if (error) {
+      console.error("Phone update error:", error);
+      redirect(`/profile?phoneError=${encodeURIComponent("Could not update phone number")}`);
+    }
+
+    redirect("/profile?message=Phone number saved");
+  } catch (err) {
+    rethrowIfRedirect(err);
+    console.error("Unexpected error in updatePhone:", err);
+    redirect(`/profile?phoneError=${encodeURIComponent("An unexpected error occurred. Please try again.")}`);
+  }
+}
+
+export async function sendPasswordReset() {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      redirect("/login");
+    }
+
+    if (!process.env.NEXT_PUBLIC_SITE_URL) {
+      console.error("NEXT_PUBLIC_SITE_URL is not configured");
+      redirect(`/profile?error=${encodeURIComponent("Server configuration error. Please contact support.")}`);
+    }
+
+    const { error } = await supabase.auth.resetPasswordForEmail(user.email!, {
+      redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/reset-password`,
+    });
+
+    if (error) {
+      console.error("Password reset error:", error);
+
+      let errorMessage = "Could not send password reset email";
+
+      if (error.message.includes("Email rate limit exceeded") || error.message.includes("rate limit")) {
+        errorMessage = "Too many requests. Please try again in a few minutes.";
+      }
+
+      redirect(`/profile?error=${encodeURIComponent(errorMessage)}`);
+    }
+
+    redirect("/profile?message=Password reset link sent. Check your email.");
+  } catch (err) {
+    rethrowIfRedirect(err);
+    console.error("Unexpected error in sendPasswordReset:", err);
+    redirect(`/profile?error=${encodeURIComponent("An unexpected error occurred. Please try again.")}`);
+  }
 }
 
 export async function updatePassword(formData: FormData) {
