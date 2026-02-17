@@ -220,6 +220,112 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ---
 
+## Deploying to Vercel
+
+Vercel detects Next.js automatically — no special framework config is needed. The main steps are setting environment variables, then updating Supabase (and Google OAuth if you're using it) to accept your production domain.
+
+### Step 1: Push Your Code to Git
+
+Vercel deploys from a Git repository (GitHub, GitLab, or Bitbucket). Make sure your code is pushed to a repo before continuing.
+
+### Step 2: Import the Project in Vercel
+
+**Option A — Vercel Dashboard (recommended):**
+
+1. Go to [vercel.com/new](https://vercel.com/new)
+2. Click **"Import Git Repository"** and select your repo
+3. Vercel will detect Next.js automatically — leave the build settings as-is
+4. **Do not deploy yet** — add environment variables first (Step 3)
+
+**Option B — Vercel CLI:**
+
+```bash
+npm install -g vercel
+vercel
+```
+
+Follow the prompts. When asked about environment variables, add them as shown in Step 3.
+
+### Step 3: Set Environment Variables
+
+In the Vercel project settings under **Settings → Environment Variables**, add:
+
+| Variable | Value | Notes |
+| -------- | ----- | ----- |
+| `NEXT_PUBLIC_SUPABASE_URL` | `https://your-project.supabase.co` | From Supabase → Settings → API |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | `eyJ...` | Publishable / anon key from Supabase → Settings → API |
+| `NEXT_PUBLIC_SITE_URL` | `https://your-app.vercel.app` | Your production URL — update after first deploy if you don't have a custom domain yet |
+
+Set all three variables for the **Production** environment. If you want password reset and avatar uploads to work in preview deployments too, add them to **Preview** as well (using the appropriate preview URL or a wildcard).
+
+> **Tip:** After your first deploy, Vercel will show you the assigned `.vercel.app` URL. If it differs from what you entered for `NEXT_PUBLIC_SITE_URL`, update the variable and redeploy.
+
+### Step 4: Deploy
+
+Click **Deploy** in the dashboard, or run `vercel --prod` from the CLI. Vercel will build and deploy the app.
+
+### Step 5: Update Supabase URL Configuration
+
+Your Supabase project needs to know about the production domain for redirects (email confirmation, password reset, OAuth callbacks) to work correctly.
+
+In **Supabase Dashboard → Authentication → URL Configuration**:
+
+1. Update **Site URL** to your production URL:
+   ```
+   https://your-app.vercel.app
+   ```
+
+2. Add your production domain to **Redirect URLs**:
+   ```
+   https://your-app.vercel.app/**
+   ```
+
+3. If you want redirects to work in Vercel preview deployments too, add a wildcard for your Vercel preview URLs:
+   ```
+   https://*-your-username.vercel.app/**
+   ```
+
+### Step 6: Update Google OAuth (if using Google)
+
+Production deployments need the production domain registered in Google Cloud Console.
+
+In **Google Cloud Console → APIs & Services → Credentials**, edit your OAuth client:
+
+1. Under **Authorized JavaScript origins**, add:
+   ```
+   https://your-app.vercel.app
+   ```
+
+2. The **Authorized redirect URIs** entry (`https://YOUR_REF.supabase.co/auth/v1/callback`) does **not** need to change — it points to Supabase, not your app.
+
+3. Save.
+
+### Step 7: Add a Custom Domain (Optional)
+
+In **Vercel Dashboard → Settings → Domains**, add your custom domain. Then:
+
+1. Update `NEXT_PUBLIC_SITE_URL` in Vercel environment variables to your custom domain (e.g. `https://myapp.com`)
+2. Update **Site URL** in Supabase to the custom domain
+3. Add the custom domain to Supabase **Redirect URLs**: `https://myapp.com/**`
+4. Add the custom domain to Google Cloud Console **Authorized JavaScript origins** (if using Google OAuth)
+5. Redeploy (`vercel --prod` or push a new commit)
+
+### Preview Deployments
+
+Vercel creates a unique URL for every branch and pull request. Auth flows that depend on `NEXT_PUBLIC_SITE_URL` (password reset emails, avatar uploads) will use the production URL by default, since that's what the variable is set to.
+
+To make password reset work correctly in preview deployments, you can use Vercel's [System Environment Variables](https://vercel.com/docs/projects/environment-variables/system-environment-variables) and set `NEXT_PUBLIC_SITE_URL` to `$VERCEL_URL` for the Preview environment. Note that `VERCEL_URL` is not prefixed with `https://`, so you'd need to handle that in your code, or simply leave it pointing to production (password reset still works — it just redirects back to the production URL).
+
+### Checklist
+
+- [ ] Environment variables set in Vercel (Production + Preview)
+- [ ] Supabase Site URL updated to production domain
+- [ ] Supabase Redirect URLs include production domain (and optionally preview wildcard)
+- [ ] Google OAuth Authorized JavaScript origins includes production domain
+- [ ] `NEXT_PUBLIC_SITE_URL` matches the deployed URL exactly
+
+---
+
 ## Profile Management Setup
 
 The `/profile` page lets users update their display name, email address, phone number, and avatar, and send themselves a password reset link. It requires a `profiles` table in Supabase and a Storage bucket for avatars.
