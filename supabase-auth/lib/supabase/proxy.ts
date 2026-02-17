@@ -29,14 +29,12 @@ export async function updateSession(request: NextRequest) {
     },
   );
 
-  // Do not run code between createServerClient and
-  // supabase.auth.getClaims(). A simple mistake could make it very hard to
-  // debug issues with users being randomly logged out.
-
-  // IMPORTANT: Avoid removing getClaims() — if you use server-side rendering
-  // with the Supabase client, your users may be randomly logged out.
-  const { data } = await supabase.auth.getClaims();
-  const user = data?.claims;
+  // IMPORTANT: Always use getUser() for route protection, not getClaims().
+  // getUser() verifies the session with Supabase servers, while getClaims()
+  // only validates the JWT locally and doesn't verify if the session is still valid.
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   // Redirect unauthenticated users to /login for protected routes
   if (
@@ -44,6 +42,7 @@ export async function updateSession(request: NextRequest) {
     !request.nextUrl.pathname.startsWith("/login") &&
     !request.nextUrl.pathname.startsWith("/signup") &&
     !request.nextUrl.pathname.startsWith("/auth") &&
+    !request.nextUrl.pathname.startsWith("/forgot-password") &&
     request.nextUrl.pathname !== "/"
   ) {
     const url = request.nextUrl.clone();
