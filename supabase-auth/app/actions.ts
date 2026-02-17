@@ -4,12 +4,34 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
+// Basic email validation
+function isValidEmail(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+// Basic password validation
+function isValidPassword(password: string): boolean {
+  return password.length >= 6;
+}
+
 export async function login(formData: FormData) {
   const supabase = await createClient();
 
+  // Validate inputs
+  const email = formData.get("email") as string;
+  const password = formData.get("password") as string;
+
+  if (!email || !password) {
+    redirect("/login?error=Email and password are required");
+  }
+
+  if (!isValidEmail(email)) {
+    redirect("/login?error=Please enter a valid email address");
+  }
+
   const { error } = await supabase.auth.signInWithPassword({
-    email: formData.get("email") as string,
-    password: formData.get("password") as string,
+    email,
+    password,
   });
 
   if (error) {
@@ -40,9 +62,25 @@ export async function login(formData: FormData) {
 export async function signup(formData: FormData) {
   const supabase = await createClient();
 
+  // Validate inputs
+  const email = formData.get("email") as string;
+  const password = formData.get("password") as string;
+
+  if (!email || !password) {
+    redirect("/signup?error=Email and password are required");
+  }
+
+  if (!isValidEmail(email)) {
+    redirect("/signup?error=Please enter a valid email address");
+  }
+
+  if (!isValidPassword(password)) {
+    redirect("/signup?error=Password must be at least 6 characters long");
+  }
+
   const { error } = await supabase.auth.signUp({
-    email: formData.get("email") as string,
-    password: formData.get("password") as string,
+    email,
+    password,
   });
 
   if (error) {
@@ -83,6 +121,15 @@ export async function requestPasswordReset(formData: FormData) {
   const supabase = await createClient();
   const email = formData.get("email") as string;
 
+  // Validate input
+  if (!email) {
+    redirect("/forgot-password?error=Email is required");
+  }
+
+  if (!isValidEmail(email)) {
+    redirect("/forgot-password?error=Please enter a valid email address");
+  }
+
   // Check if NEXT_PUBLIC_SITE_URL is configured
   if (!process.env.NEXT_PUBLIC_SITE_URL) {
     console.error("NEXT_PUBLIC_SITE_URL is not configured");
@@ -117,6 +164,15 @@ export async function requestPasswordReset(formData: FormData) {
 export async function updatePassword(formData: FormData) {
   const supabase = await createClient();
   const password = formData.get("password") as string;
+
+  // Validate input
+  if (!password) {
+    redirect("/update-password?error=Password is required");
+  }
+
+  if (!isValidPassword(password)) {
+    redirect("/update-password?error=Password must be at least 6 characters long");
+  }
 
   const { error } = await supabase.auth.updateUser({
     password: password,

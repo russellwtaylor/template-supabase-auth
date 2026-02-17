@@ -4,13 +4,15 @@ import { signout } from "@/app/actions";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
-  const { data, error } = await supabase.auth.getClaims();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  if (error || !data?.claims) {
+  if (!user) {
     redirect("/login");
   }
 
-  const email = data.claims.email as string;
+  const email = user.email as string;
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-black">
