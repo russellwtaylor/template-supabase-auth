@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 // Basic email validation
 function isValidEmail(email: string): boolean {
@@ -41,7 +42,7 @@ export async function login(formData: FormData) {
 
     // Map Supabase error messages to user-friendly messages
     if (error.message.includes("Invalid login credentials")) {
-      errorMessage = "Invalid email or password";
+      errorMessage = "Invalid email or password. If you signed up with Google, use the Google button above.";
     } else if (error.message.includes("Email not confirmed")) {
       errorMessage = "Please verify your email address before logging in";
     } else if (error.message.includes("Email rate limit exceeded")) {
@@ -96,7 +97,7 @@ export async function signup(formData: FormData) {
 
     // Map Supabase error messages to user-friendly messages
     if (error.message.includes("User already registered")) {
-      errorMessage = "An account with this email already exists";
+      errorMessage = "An account with this email already exists. Try signing in, or use Google if that's how you registered.";
     } else if (error.message.includes("Password should be at least")) {
       errorMessage = "Password must be at least 6 characters long";
     } else if (error.message.includes("invalid format") || error.message.includes("Invalid email")) {
@@ -400,4 +401,34 @@ export async function updatePassword(formData: FormData) {
   await supabase.auth.signOut();
   revalidatePath("/", "layout");
   redirect("/login?message=Password updated successfully. Please log in with your new password.");
+}
+
+export async function deleteAccount() {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      redirect("/login");
+    }
+
+    const adminClient = createAdminClient();
+    const { error } = await adminClient.auth.admin.deleteUser(user.id);
+
+    if (error) {
+      console.error("Account deletion error:", error);
+      redirect(`/profile?error=${encodeURIComponent("Could not delete account. Please try again.")}`);
+    }
+
+    // Sign out the session after deletion
+    await supabase.auth.signOut();
+    revalidatePath("/", "layout");
+    redirect("/login?message=Your account has been permanently deleted.");
+  } catch (err) {
+    rethrowIfRedirect(err);
+    console.error("Unexpected error in deleteAccount:", err);
+    redirect(`/profile?error=${encodeURIComponent("An unexpected error occurred. Please try again.")}`);
+  }
 }
