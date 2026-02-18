@@ -3,6 +3,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import CodeInput from "@/app/components/ui/code-input";
+import { ErrorAlert } from "@/app/components/ui/alert";
 
 interface TotpManagerProps {
   enrolled: boolean;
@@ -156,27 +158,6 @@ export default function TotpManager({ enrolled, factorId }: TotpManagerProps) {
     }
   }
 
-  const codeInput = (
-    <input
-      type="text"
-      inputMode="numeric"
-      pattern="[0-9]*"
-      maxLength={6}
-      value={code}
-      onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
-      placeholder="000000"
-      autoComplete="one-time-code"
-      autoFocus
-      className="block w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-center text-lg tracking-widest text-zinc-900 placeholder-zinc-400 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50 dark:placeholder-zinc-500 dark:focus:border-zinc-400 dark:focus:ring-zinc-400"
-    />
-  );
-
-  const errorBanner = error && (
-    <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-400">
-      {error}
-    </div>
-  );
-
   // ── Not enrolled, idle ───────────────────────────────────────────────────
   if (!isEnrolled && phase === "idle") {
     return (
@@ -185,7 +166,7 @@ export default function TotpManager({ enrolled, factorId }: TotpManagerProps) {
           Once enabled, you&apos;ll enter a 6-digit code from your authenticator
           app each time you sign in.
         </p>
-        {errorBanner}
+        {error && <ErrorAlert>{error}</ErrorAlert>}
         <button
           onClick={startEnroll}
           disabled={loading}
@@ -226,10 +207,10 @@ export default function TotpManager({ enrolled, factorId }: TotpManagerProps) {
           </p>
         </details>
 
-        {errorBanner}
+        {error && <ErrorAlert>{error}</ErrorAlert>}
 
         <div className="space-y-3">
-          {codeInput}
+          <CodeInput value={code} onChange={setCode} autoFocus />
           <button
             onClick={verifyEnroll}
             disabled={loading || code.length !== 6}
@@ -262,6 +243,7 @@ export default function TotpManager({ enrolled, factorId }: TotpManagerProps) {
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
+            aria-hidden="true"
           >
             <path
               strokeLinecap="round"
@@ -274,7 +256,7 @@ export default function TotpManager({ enrolled, factorId }: TotpManagerProps) {
             Two-factor authentication is enabled
           </span>
         </div>
-        {errorBanner}
+        {error && <ErrorAlert>{error}</ErrorAlert>}
         <button
           onClick={() => {
             setPhase("disabling");
@@ -295,8 +277,8 @@ export default function TotpManager({ enrolled, factorId }: TotpManagerProps) {
         <p className="text-sm text-zinc-600 dark:text-zinc-400">
           Enter the current code from your authenticator app to confirm.
         </p>
-        {errorBanner}
-        {codeInput}
+        {error && <ErrorAlert>{error}</ErrorAlert>}
+        <CodeInput value={code} onChange={setCode} autoFocus />
         <button
           onClick={confirmDisable}
           disabled={loading || code.length !== 6}

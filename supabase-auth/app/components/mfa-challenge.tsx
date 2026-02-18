@@ -3,8 +3,14 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import CodeInput from "@/app/components/ui/code-input";
+import { ErrorAlert } from "@/app/components/ui/alert";
 
-export default function MfaChallenge() {
+interface MfaChallengeProps {
+  next?: string;
+}
+
+export default function MfaChallenge({ next }: MfaChallengeProps) {
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -48,7 +54,7 @@ export default function MfaChallenge() {
         return;
       }
 
-      router.push("/dashboard");
+      router.push(next && next.startsWith("/") ? next : "/dashboard");
     } catch (err) {
       console.error("MFA challenge error:", err);
       setError("Verification failed. Please try again.");
@@ -58,23 +64,8 @@ export default function MfaChallenge() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {error && (
-        <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-400">
-          {error}
-        </div>
-      )}
-      <input
-        type="text"
-        inputMode="numeric"
-        pattern="[0-9]*"
-        maxLength={6}
-        value={code}
-        onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
-        placeholder="000000"
-        autoComplete="one-time-code"
-        autoFocus
-        className="block w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-center text-lg tracking-widest text-zinc-900 placeholder-zinc-400 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50 dark:placeholder-zinc-500 dark:focus:border-zinc-400 dark:focus:ring-zinc-400"
-      />
+      {error && <ErrorAlert>{error}</ErrorAlert>}
+      <CodeInput value={code} onChange={setCode} autoFocus />
       <button
         type="submit"
         disabled={loading || code.length !== 6}

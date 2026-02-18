@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { signout } from "@/app/actions";
+import AuthCard from "@/app/components/ui/auth-card";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -12,20 +13,20 @@ export default async function DashboardPage() {
     redirect("/login");
   }
 
-  const email = user.email as string;
-
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-black">
-      <div className="w-full max-w-sm space-y-6 px-4 text-center">
-        <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
-          Dashboard
-        </h1>
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">
-          Signed in as{" "}
-          <span className="font-medium text-zinc-900 dark:text-zinc-50">
-            {email}
-          </span>
-        </p>
+    <AuthCard>
+      <div className="space-y-6 text-center">
+        <div className="space-y-2">
+          <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
+            Dashboard
+          </h1>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+            Signed in as{" "}
+            <span className="font-medium text-zinc-900 dark:text-zinc-50">
+              {user.email}
+            </span>
+          </p>
+        </div>
         <div className="flex flex-col items-center gap-3">
           <a
             href="/profile"
@@ -43,6 +44,6 @@ export default async function DashboardPage() {
           </form>
         </div>
       </div>
-    </div>
+    </AuthCard>
   );
 }

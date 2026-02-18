@@ -25,6 +25,7 @@ A minimal, cloneable boilerplate for Next.js 16 with Supabase authentication. In
 - ✅ **Profile management** — update display name, email, avatar, phone number — [Setup Guide](#profile-management-setup)
 - ✅ **Avatar upload** — Supabase Storage with per-user folders and public CDN URLs
 - ✅ **TOTP two-factor authentication** — authenticator app enrollment, login challenge, and unenrollment — [Setup Guide](#totp-2fa-setup)
+- ✅ **Account deletion** — permanent self-serve account deletion with confirmation step — [Setup Guide](#account-deletion-setup)
 
 ## File Structure
 
@@ -40,7 +41,8 @@ A minimal, cloneable boilerplate for Next.js 16 with Supabase authentication. In
 │   │   ├── google-auth-button.tsx        # Google OAuth login button (client component)
 │   │   ├── avatar-upload.tsx             # Avatar upload with Storage (client component)
 │   │   ├── mfa-challenge.tsx             # TOTP code entry for login (client component)
-│   │   └── totp-manager.tsx              # TOTP enrollment/unenrollment UI (client component)
+│   │   ├── totp-manager.tsx              # TOTP enrollment/unenrollment UI (client component)
+│   │   └── account-delete-button.tsx     # Account deletion with inline confirmation (client component)
 │   ├── page.tsx                          # Landing page
 │   ├── login/page.tsx                    # Login form (with Google OAuth)
 │   ├── signup/page.tsx                   # Signup form (with Google OAuth)
@@ -71,6 +73,8 @@ A minimal, cloneable boilerplate for Next.js 16 with Supabase authentication. In
 | `app/components/avatar-upload.tsx` | Client component; validates file size, uploads to Supabase Storage, calls `updateAvatar` server action. |
 | `app/components/mfa-challenge.tsx` | Client component; `listFactors` → `challenge` → `verify` → redirect to `/dashboard`. Used on the `/mfa` page after password login. |
 | `app/components/totp-manager.tsx` | Client component; handles TOTP enrollment (QR code display), code verification, and unenrollment with confirmation. |
+| `app/components/account-delete-button.tsx` | Client component; shows a "Delete account" button with an inline confirmation step before calling the `deleteAccount` server action. |
+| `lib/supabase/admin.ts` | Creates a Supabase client using the service role key for admin operations (account deletion). Never imported client-side. |
 | `app/auth/confirm/route.ts` | GET handler for email confirmation links (`token_hash` + `type`); supports `?next=` for redirect after confirm. |
 | `app/auth/callback/route.ts` | GET handler for OAuth callbacks; exchanges code for session and redirects to dashboard. |
 | `app/auth/reset-password/route.ts` | GET handler for password reset links; supports multiple auth flows (PKCE, token hash, session-based). |
@@ -538,6 +542,40 @@ The dashboard has a sign out button that calls the `signout` server action, whic
 
 ---
 
+## Account Deletion Setup
+
+Account deletion uses Supabase's Admin API, which requires the service role key. This runs only in server actions and is never exposed to the client.
+
+### 1. Add the Service Role Key
+
+Add `SUPABASE_SERVICE_ROLE_KEY` to your `.env.local`:
+
+```bash
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+```
+
+Find it in: **Supabase Dashboard → Settings → API → Service role key** (secret).
+
+> **Important:** Never use `NEXT_PUBLIC_` prefix on this key — it must stay server-side only.
+
+### 2. How It Works
+
+When a user clicks **Delete account** on the profile page:
+
+1. They're shown an inline confirmation warning (cannot be undone)
+2. On confirm, the `deleteAccount` server action runs:
+   - Verifies the user's session with `getUser()`
+   - Calls `adminClient.auth.admin.deleteUser(userId)` — this permanently removes the account from Supabase Auth
+   - The `profiles` row is deleted automatically via the `ON DELETE CASCADE` foreign key set up in the SQL migration
+   - Signs out the session
+   - Redirects to `/login` with a confirmation message
+
+### 3. Verify for Vercel Deployment
+
+If deploying to Vercel, add `SUPABASE_SERVICE_ROLE_KEY` to your Vercel project's environment variables (same place as the other Supabase vars).
+
+---
+
 ## Extending
 
 ### Add More Protected Pages
@@ -940,8 +978,8 @@ This template follows [Supabase's official security recommendations](https://sup
 - ✅ **Profile management** – Already implemented (display name, email, phone, avatar)
 - ✅ **TOTP two-factor authentication** – Already implemented
 - **Additional OAuth providers** – Add GitHub, Microsoft, Twitter, etc. (see [Add Other OAuth Providers](#add-other-oauth-providers-github-microsoft-etc) above)
-- **Enforce AAL2 globally** – Add assurance level check to the proxy for stricter 2FA enforcement
+- ✅ **Enforce AAL2 globally** – Already implemented (middleware enforces TOTP verification on all protected routes)
 - **Session management** – Show users active sessions and allow them to revoke access
-- **Account deletion** – Allow users to permanently delete their account
+- ✅ **Account deletion** – Already implemented (permanent self-serve deletion via Admin API)
 - **Magic link authentication** – Passwordless login via email links
 - **SMS 2FA** – Phone-based OTP (requires an SMS provider like Twilio configured in Supabase)

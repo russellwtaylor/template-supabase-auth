@@ -1,8 +1,13 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import MfaChallenge from "@/app/components/mfa-challenge";
+import AuthCard from "@/app/components/ui/auth-card";
 
-export default async function MfaPage() {
+interface MfaPageProps {
+  searchParams: Promise<{ next?: string }>;
+}
+
+export default async function MfaPage({ searchParams }: MfaPageProps) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -12,26 +17,27 @@ export default async function MfaPage() {
     redirect("/login");
   }
 
-  const { data: aalData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+  const { data: aalData } =
+    await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
 
   // Already at AAL2 — no need to verify
   if (aalData?.currentLevel === "aal2") {
     redirect("/dashboard");
   }
 
+  const { next } = await searchParams;
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-black">
-      <div className="w-full max-w-sm space-y-6 px-4">
-        <div className="text-center">
-          <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
-            Two-factor authentication
-          </h1>
-          <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
-            Enter the 6-digit code from your authenticator app
-          </p>
-        </div>
-        <MfaChallenge />
+    <AuthCard>
+      <div className="text-center">
+        <h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
+          Two-factor authentication
+        </h1>
+        <p className="mt-2 text-sm text-zinc-500 dark:text-zinc-400">
+          Enter the 6-digit code from your authenticator app
+        </p>
       </div>
-    </div>
+      <MfaChallenge next={next} />
+    </AuthCard>
   );
 }

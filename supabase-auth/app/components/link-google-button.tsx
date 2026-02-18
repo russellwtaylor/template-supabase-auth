@@ -2,22 +2,21 @@
 
 import { createClient } from "@/lib/supabase/client";
 
-export function GoogleAuthButton() {
-  const handleGoogleLogin = async () => {
+export function LinkGoogleButton() {
+  async function handleLink() {
     const supabase = createClient();
-
-    await supabase.auth.signInWithOAuth({
+    await supabase.auth.linkIdentity({
       provider: "google",
       options: {
         redirectTo: `${location.origin}/auth/callback`,
       },
     });
-  };
+  }
 
   return (
     <button
       type="button"
-      onClick={handleGoogleLogin}
+      onClick={handleLink}
       className="flex w-full items-center justify-center gap-3 rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50 dark:hover:bg-zinc-800"
     >
       <svg className="h-5 w-5" viewBox="0 0 24 24" aria-hidden="true">
@@ -38,7 +37,7 @@ export function GoogleAuthButton() {
           d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
         />
       </svg>
-      Continue with Google
+      Link Google account
     </button>
   );
 }

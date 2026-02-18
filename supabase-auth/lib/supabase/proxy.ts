@@ -36,18 +36,34 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  const path = request.nextUrl.pathname;
+
+  // Public / auth routes that never require login or AAL2
+  const isPublicRoute =
+    path === "/" ||
+    path.startsWith("/login") ||
+    path.startsWith("/signup") ||
+    path.startsWith("/auth") ||
+    path.startsWith("/forgot-password") ||
+    path === "/update-password";
+
   // Redirect unauthenticated users to /login for protected routes
-  if (
-    !user &&
-    !request.nextUrl.pathname.startsWith("/login") &&
-    !request.nextUrl.pathname.startsWith("/signup") &&
-    !request.nextUrl.pathname.startsWith("/auth") &&
-    !request.nextUrl.pathname.startsWith("/forgot-password") &&
-    request.nextUrl.pathname !== "/"
-  ) {
+  if (!user && !isPublicRoute) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
+  }
+
+  // Enforce AAL2 for authenticated users who have TOTP enrolled
+  if (user && !isPublicRoute && path !== "/mfa") {
+    const { data: aalData } =
+      await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (aalData?.nextLevel === "aal2" && aalData?.currentLevel !== "aal2") {
+      const url = request.nextUrl.clone();
+      url.pathname = "/mfa";
+      url.searchParams.set("next", path);
+      return NextResponse.redirect(url);
+    }
   }
 
   // IMPORTANT: You *must* return the supabaseResponse object as-is.
