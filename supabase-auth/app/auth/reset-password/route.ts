@@ -33,6 +33,13 @@ export async function GET(request: NextRequest) {
 
 	// Handle token hash flow (token_hash + type parameters)
 	if (token_hash && type) {
+		// Sign out any existing session first to prevent conflicts with OTP verification.
+		// This is especially important for OAuth-only users (e.g. Google sign-in) who are
+		// setting a password for the first time — the active OAuth session can cause verifyOtp
+		// to fail, and without a clean recovery session Supabase won't add the email identity
+		// when the password is updated.
+		await supabase.auth.signOut();
+
 		const { error } = await supabase.auth.verifyOtp({
 			token_hash,
 			type: type as EmailOtpType,
