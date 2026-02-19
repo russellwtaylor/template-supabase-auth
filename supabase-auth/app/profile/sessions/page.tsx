@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import SessionList, { type Session } from "@/app/components/session-list";
 import AuthCard from "@/app/components/ui/auth-card";
+import { ErrorAlert, SuccessAlert } from "@/app/components/ui/alert";
 
 export default async function SessionsPage({
   searchParams,
@@ -56,16 +57,8 @@ export default async function SessionsPage({
         </p>
       </div>
 
-      {message && (
-        <div className="rounded-md bg-green-50 px-4 py-3 text-sm text-green-700 dark:bg-green-900/30 dark:text-green-400">
-          {message}
-        </div>
-      )}
-      {error && (
-        <div className="rounded-md bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-900/30 dark:text-red-400">
-          {error}
-        </div>
-      )}
+      {message && <SuccessAlert>{message}</SuccessAlert>}
+      {error && <ErrorAlert>{error}</ErrorAlert>}
 
       {sessions && sessions.length > 0 ? (
         <SessionList
