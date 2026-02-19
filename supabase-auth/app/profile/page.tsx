@@ -72,7 +72,7 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
 		await searchParams;
 
 	return (
-		<div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-black">
+		<main className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-black">
 			<div className="w-full max-w-sm px-4 py-12">
 				{/* Header */}
 				<div className="mb-8 text-center">
@@ -296,6 +296,6 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
 					</a>
 				</div>
 			</div>
-		</div>
+		</main>
 	);
 }
