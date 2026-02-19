@@ -214,6 +214,20 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
 					</a>
 				</div>
 
+				{/* Active sessions */}
+				<div className="space-y-3">
+					<h2 className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+						Active sessions
+					</h2>
+					<a
+						href="/profile/sessions"
+						className="flex items-center justify-between rounded-md border border-zinc-300 bg-white px-4 py-3 text-sm hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+					>
+						<span className="text-zinc-700 dark:text-zinc-300">Manage sessions</span>
+						<span className="text-zinc-400 dark:text-zinc-500">→</span>
+					</a>
+				</div>
+
 				{/* Connected accounts */}
 				<div className="space-y-3">
 					<h2 className="text-sm font-medium text-zinc-700 dark:text-zinc-300">

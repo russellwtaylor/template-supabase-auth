@@ -576,6 +576,67 @@ If deploying to Vercel, add `SUPABASE_SERVICE_ROLE_KEY` to your Vercel project's
 
 ---
 
+## Session Management Setup
+
+The `/profile/sessions` page lets users view all active sessions (device info, IP, last activity) and revoke individual sessions or sign out all other sessions at once. This requires two SQL functions that safely query `auth.sessions` on behalf of the current user.
+
+### Step 1: Run the SQL Migration
+
+In **Supabase Dashboard → SQL Editor**, run:
+
+```sql
+-- List sessions for the currently authenticated user
+create or replace function public.get_user_sessions()
+returns table (
+  id uuid,
+  created_at timestamptz,
+  updated_at timestamptz,
+  user_agent text,
+  ip text
+)
+language sql
+security definer
+set search_path = ''
+as $$
+  select id, created_at, updated_at, user_agent, ip::text
+  from auth.sessions
+  where user_id = (select auth.uid())
+  order by updated_at desc;
+$$;
+
+-- Delete a single session (only if it belongs to the current user)
+create or replace function public.delete_user_session(session_id uuid)
+returns void
+language sql
+security definer
+set search_path = ''
+as $$
+  delete from auth.sessions
+  where id = session_id
+    and user_id = (select auth.uid());
+$$;
+```
+
+Both functions use `SECURITY DEFINER` so they can read/write `auth.sessions` without granting direct table access to users. The `where user_id = (select auth.uid())` clause ensures users can only see and delete their own sessions.
+
+### How It Works
+
+- **List sessions**: The page calls `supabase.rpc('get_user_sessions')` to fetch all sessions for the authenticated user, ordered by most recently active.
+- **Revoke a session**: The `revokeSession` server action calls `supabase.rpc('delete_user_session', { session_id })`, which deletes the row from `auth.sessions`. The next request from that session will be rejected as expired.
+- **Sign out all others**: The `revokeOtherSessions` server action calls `supabase.auth.signOut({ scope: 'others' })`, which invalidates all sessions except the current one.
+- **Current session detection**: The current session's ID (`sid` claim) is extracted from the JWT access token so it can be marked with a "This device" badge.
+
+### Verification
+
+1. Run the SQL → confirm the two functions appear in **Supabase Dashboard → Database → Functions**
+2. Visit `/profile` → see "Active sessions" section with a "Manage sessions" link
+3. Click → `/profile/sessions` shows a list of sessions with device info and IP
+4. The current session is marked "This device"; other sessions have a Revoke button
+5. Click Revoke → session is removed from the list; success message shown
+6. "Sign out all other sessions" button appears when there are other active sessions
+
+---
+
 ## Extending
 
 ### Add More Protected Pages
