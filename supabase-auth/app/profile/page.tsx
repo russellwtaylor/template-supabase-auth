@@ -10,6 +10,7 @@ import AvatarUpload from "@/app/components/avatar-upload";
 import AccountDeleteButton from "@/app/components/account-delete-button";
 import { LinkGoogleButton } from "@/app/components/link-google-button";
 import { ErrorAlert, SuccessAlert } from "@/app/components/ui/alert";
+import { Input } from "@/app/components/ui/input";
 
 interface ProfilePageProps {
 	searchParams: Promise<{
@@ -19,6 +20,22 @@ interface ProfilePageProps {
 		emailError?: string;
 		phoneError?: string;
 	}>;
+}
+
+function SectionLabel({ children, className }: { children: React.ReactNode; className?: string }) {
+	return (
+		<h2 className={`text-xs font-medium uppercase tracking-wider text-zinc-400 dark:text-zinc-500 ${className ?? ""}`}>
+			{children}
+		</h2>
+	);
+}
+
+function Section({ children }: { children: React.ReactNode }) {
+	return (
+		<div className="space-y-3 border-t border-zinc-200 pt-6 dark:border-zinc-800">
+			{children}
+		</div>
+	);
 }
 
 export default async function ProfilePage({ searchParams }: ProfilePageProps) {
@@ -56,8 +73,9 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
 
 	return (
 		<div className="flex min-h-screen items-center justify-center bg-zinc-50 dark:bg-black">
-			<div className="w-full max-w-sm space-y-8 px-4">
-				<div className="text-center">
+			<div className="w-full max-w-sm px-4 py-12">
+				{/* Header */}
+				<div className="mb-8 text-center">
 					<h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">
 						Profile
 					</h1>
@@ -66,8 +84,8 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
 					</p>
 				</div>
 
-				{error && <ErrorAlert>{error}</ErrorAlert>}
-				{message && <SuccessAlert>{message}</SuccessAlert>}
+				{error && <div className="mb-6"><ErrorAlert>{error}</ErrorAlert></div>}
+				{message && <div className="mb-6"><SuccessAlert>{message}</SuccessAlert></div>}
 
 				{/* Avatar */}
 				<div className="flex flex-col items-center gap-2">
@@ -78,13 +96,11 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
 				</div>
 
 				{/* Display Name */}
-				<div className="space-y-3">
-					<h2 className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-						Display name
-					</h2>
+				<Section>
+					<SectionLabel>Display name</SectionLabel>
 					<form className="space-y-3">
 						<div className="space-y-1">
-							<input
+							<Input
 								id="full_name"
 								name="full_name"
 								type="text"
@@ -93,11 +109,7 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
 								maxLength={100}
 								aria-describedby={nameError ? "name-error" : undefined}
 								aria-invalid={!!nameError}
-								className={`block w-full rounded-md border px-3 py-2 text-sm text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-1 bg-white dark:bg-zinc-900 dark:text-zinc-50 dark:placeholder-zinc-500 ${
-									nameError
-										? "border-red-400 focus:border-red-400 focus:ring-red-400 dark:border-red-600 dark:focus:border-red-500 dark:focus:ring-red-500"
-										: "border-zinc-300 focus:border-zinc-500 focus:ring-zinc-500 dark:border-zinc-700 dark:focus:border-zinc-400 dark:focus:ring-zinc-400"
-								}`}
+								error={!!nameError}
 							/>
 							{nameError && (
 								<p id="name-error" role="alert" className="text-xs text-red-600 dark:text-red-400">
@@ -112,16 +124,14 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
 							Save changes
 						</button>
 					</form>
-				</div>
+				</Section>
 
 				{/* Email */}
-				<div className="space-y-3">
-					<h2 className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-						Email address
-					</h2>
+				<Section>
+					<SectionLabel>Email address</SectionLabel>
 					<form className="space-y-3">
 						<div className="space-y-1">
-							<input
+							<Input
 								id="email"
 								name="email"
 								type="email"
@@ -129,11 +139,7 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
 								placeholder="you@example.com"
 								aria-describedby={emailError ? "email-error" : undefined}
 								aria-invalid={!!emailError}
-								className={`block w-full rounded-md border px-3 py-2 text-sm text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-1 bg-white dark:bg-zinc-900 dark:text-zinc-50 dark:placeholder-zinc-500 ${
-									emailError
-										? "border-red-400 focus:border-red-400 focus:ring-red-400 dark:border-red-600 dark:focus:border-red-500 dark:focus:ring-red-500"
-										: "border-zinc-300 focus:border-zinc-500 focus:ring-zinc-500 dark:border-zinc-700 dark:focus:border-zinc-400 dark:focus:ring-zinc-400"
-								}`}
+								error={!!emailError}
 							/>
 							{emailError && (
 								<p id="email-error" role="alert" className="text-xs text-red-600 dark:text-red-400">
@@ -148,20 +154,17 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
 							Update email
 						</button>
 						<p className="text-xs text-zinc-500 dark:text-zinc-400">
-							You&apos;ll receive a confirmation email at your new
-							address.
+							You&apos;ll receive a confirmation email at your new address.
 						</p>
 					</form>
-				</div>
+				</Section>
 
 				{/* Phone */}
-				<div className="space-y-3">
-					<h2 className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-						Phone number
-					</h2>
+				<Section>
+					<SectionLabel>Phone number</SectionLabel>
 					<form className="space-y-3">
 						<div className="space-y-1">
-							<input
+							<Input
 								id="phone"
 								name="phone"
 								type="tel"
@@ -169,11 +172,7 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
 								placeholder="+1 555 000 0000"
 								aria-describedby={phoneError ? "phone-error" : undefined}
 								aria-invalid={!!phoneError}
-								className={`block w-full rounded-md border px-3 py-2 text-sm text-zinc-900 placeholder-zinc-400 focus:outline-none focus:ring-1 bg-white dark:bg-zinc-900 dark:text-zinc-50 dark:placeholder-zinc-500 ${
-									phoneError
-										? "border-red-400 focus:border-red-400 focus:ring-red-400 dark:border-red-600 dark:focus:border-red-500 dark:focus:ring-red-500"
-										: "border-zinc-300 focus:border-zinc-500 focus:ring-zinc-500 dark:border-zinc-700 dark:focus:border-zinc-400 dark:focus:ring-zinc-400"
-								}`}
+								error={!!phoneError}
 							/>
 							{phoneError && (
 								<p id="phone-error" role="alert" className="text-xs text-red-600 dark:text-red-400">
@@ -188,13 +187,11 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
 							Save phone number
 						</button>
 					</form>
-				</div>
+				</Section>
 
 				{/* Two-factor authentication */}
-				<div className="space-y-3">
-					<h2 className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-						Two-factor authentication
-					</h2>
+				<Section>
+					<SectionLabel>Two-factor authentication</SectionLabel>
 					<a
 						href="/profile/totp"
 						className="flex items-center justify-between rounded-md border border-zinc-300 bg-white px-4 py-3 text-sm hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
@@ -212,13 +209,11 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
 							{totpEnabled ? "Enabled" : "Off"} →
 						</span>
 					</a>
-				</div>
+				</Section>
 
 				{/* Active sessions */}
-				<div className="space-y-3">
-					<h2 className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-						Active sessions
-					</h2>
+				<Section>
+					<SectionLabel>Active sessions</SectionLabel>
 					<a
 						href="/profile/sessions"
 						className="flex items-center justify-between rounded-md border border-zinc-300 bg-white px-4 py-3 text-sm hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
@@ -226,13 +221,11 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
 						<span className="text-zinc-700 dark:text-zinc-300">Manage sessions</span>
 						<span className="text-zinc-400 dark:text-zinc-500">→</span>
 					</a>
-				</div>
+				</Section>
 
 				{/* Connected accounts */}
-				<div className="space-y-3">
-					<h2 className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-						Connected accounts
-					</h2>
+				<Section>
+					<SectionLabel>Connected accounts</SectionLabel>
 					<div className="flex flex-col gap-2">
 						{hasGoogleIdentity && (
 							<div className="flex items-center gap-3 rounded-md border border-zinc-200 bg-white px-4 py-3 dark:border-zinc-700 dark:bg-zinc-900">
@@ -257,13 +250,11 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
 						)}
 						{!hasGoogleIdentity && <LinkGoogleButton />}
 					</div>
-				</div>
+				</Section>
 
 				{/* Password */}
-				<div className="space-y-3">
-					<h2 className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
-						Password
-					</h2>
+				<Section>
+					<SectionLabel>Password</SectionLabel>
 					{hasEmailIdentity ? (
 						<form>
 							<button
@@ -288,17 +279,15 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
 							</form>
 						</div>
 					)}
-				</div>
+				</Section>
 
 				{/* Danger zone */}
-				<div className="space-y-3">
-					<h2 className="text-sm font-medium text-red-600 dark:text-red-400">
-						Danger zone
-					</h2>
+				<Section>
+					<SectionLabel className="text-red-500 dark:text-red-500">Danger zone</SectionLabel>
 					<AccountDeleteButton />
-				</div>
+				</Section>
 
-				<div className="border-t border-zinc-200 pt-4 text-center dark:border-zinc-800">
+				<div className="mt-8 border-t border-zinc-200 pt-6 text-center dark:border-zinc-800">
 					<a
 						href="/dashboard"
 						className="text-sm text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"

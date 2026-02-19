@@ -62,22 +62,22 @@ A minimal, cloneable boilerplate for Next.js 16 with Supabase authentication. In
 
 ### Key files
 
-| Path | Purpose |
-| ---- | ------- |
-| `proxy.ts` (root) | Next.js 16 proxy; runs session refresh and route checks. Matcher limits which paths run through it. |
-| `lib/supabase/proxy.ts` | `updateSession()` – creates server client, calls `getUser()` to verify session, redirects unauthenticated users to `/login` on protected paths. |
-| `lib/supabase/server.ts` | Server Supabase client (used in Server Components and server actions). |
-| `lib/supabase/client.ts` | Browser Supabase client (for client components, used by OAuth and MFA flows). |
-| `app/actions.ts` | Server actions: `login`, `signup`, `signout`, `requestPasswordReset`, `updatePassword`, `updateProfile`, `updateEmail`, `updatePhone`, `updateAvatar`, `sendPasswordReset`. |
-| `app/components/google-auth-button.tsx` | Google OAuth login button component; handles OAuth flow with `signInWithOAuth()`. |
-| `app/components/avatar-upload.tsx` | Client component; validates file size, uploads to Supabase Storage, calls `updateAvatar` server action. |
-| `app/components/mfa-challenge.tsx` | Client component; `listFactors` → `challenge` → `verify` → redirect to `/dashboard`. Used on the `/mfa` page after password login. |
-| `app/components/totp-manager.tsx` | Client component; handles TOTP enrollment (QR code display), code verification, and unenrollment with confirmation. |
-| `app/components/account-delete-button.tsx` | Client component; shows a "Delete account" button with an inline confirmation step before calling the `deleteAccount` server action. |
-| `lib/supabase/admin.ts` | Creates a Supabase client using the service role key for admin operations (account deletion). Never imported client-side. |
-| `app/auth/confirm/route.ts` | GET handler for email confirmation links (`token_hash` + `type`); supports `?next=` for redirect after confirm. |
-| `app/auth/callback/route.ts` | GET handler for OAuth callbacks; exchanges code for session and redirects to dashboard. |
-| `app/auth/reset-password/route.ts` | GET handler for password reset links; supports multiple auth flows (PKCE, token hash, session-based). |
+| Path                                       | Purpose                                                                                                                                                                     |
+| ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `proxy.ts` (root)                          | Next.js 16 proxy; runs session refresh and route checks. Matcher limits which paths run through it.                                                                         |
+| `lib/supabase/proxy.ts`                    | `updateSession()` – creates server client, calls `getUser()` to verify session, redirects unauthenticated users to `/login` on protected paths.                             |
+| `lib/supabase/server.ts`                   | Server Supabase client (used in Server Components and server actions).                                                                                                      |
+| `lib/supabase/client.ts`                   | Browser Supabase client (for client components, used by OAuth and MFA flows).                                                                                               |
+| `app/actions.ts`                           | Server actions: `login`, `signup`, `signout`, `requestPasswordReset`, `updatePassword`, `updateProfile`, `updateEmail`, `updatePhone`, `updateAvatar`, `sendPasswordReset`. |
+| `app/components/google-auth-button.tsx`    | Google OAuth login button component; handles OAuth flow with `signInWithOAuth()`.                                                                                           |
+| `app/components/avatar-upload.tsx`         | Client component; validates file size, uploads to Supabase Storage, calls `updateAvatar` server action.                                                                     |
+| `app/components/mfa-challenge.tsx`         | Client component; `listFactors` → `challenge` → `verify` → redirect to `/dashboard`. Used on the `/mfa` page after password login.                                          |
+| `app/components/totp-manager.tsx`          | Client component; handles TOTP enrollment (QR code display), code verification, and unenrollment with confirmation.                                                         |
+| `app/components/account-delete-button.tsx` | Client component; shows a "Delete account" button with an inline confirmation step before calling the `deleteAccount` server action.                                        |
+| `lib/supabase/admin.ts`                    | Creates a Supabase client using the service role key for admin operations (account deletion). Never imported client-side.                                                   |
+| `app/auth/confirm/route.ts`                | GET handler for email confirmation links (`token_hash` + `type`); supports `?next=` for redirect after confirm.                                                             |
+| `app/auth/callback/route.ts`               | GET handler for OAuth callbacks; exchanges code for session and redirects to dashboard.                                                                                     |
+| `app/auth/reset-password/route.ts`         | GET handler for password reset links; supports multiple auth flows (PKCE, token hash, session-based).                                                                       |
 
 ## Getting Started
 
@@ -127,11 +127,11 @@ cp .env.local.example .env.local
 
 Find your credentials in your Supabase project under **Settings > API**:
 
-| Variable | Where to find it | Required for |
-| -------- | ---------------- | ------------ |
-| `NEXT_PUBLIC_SUPABASE_URL` | Project URL (e.g. `https://abc123.supabase.co`) | All features |
-| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Publishable key under API Keys. For older projects, use your `anon` key — it works the same way. | All features |
-| `NEXT_PUBLIC_SITE_URL` | Your app's URL (e.g. `http://localhost:3000` for local dev, `https://myapp.com` for production) | Password reset, avatar upload |
+| Variable                               | Where to find it                                                                                 | Required for                  |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------ | ----------------------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`             | Project URL (e.g. `https://abc123.supabase.co`)                                                  | All features                  |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Publishable key under API Keys. For older projects, use your `anon` key — it works the same way. | All features                  |
+| `NEXT_PUBLIC_SITE_URL`                 | Your app's URL (e.g. `http://localhost:3000` for local dev, `https://myapp.com` for production)  | Password reset, avatar upload |
 
 ### 3. Configure Supabase Auth
 
@@ -142,11 +142,11 @@ In your Supabase dashboard, configure authentication settings:
 Go to **Authentication > URL Configuration** and set:
 
 - **Site URL**: `http://localhost:3000` (for local development)
-  - For production, change this to your deployed URL (e.g. `https://myapp.com`)
+    - For production, change this to your deployed URL (e.g. `https://myapp.com`)
 - **Redirect URLs**: Add the following URLs to the allowlist:
-  - `http://localhost:3000/**` (allows all local callback paths)
-  - `http://localhost:3000/auth/reset-password` (password reset callback)
-  - For production, add your production URLs as well (e.g. `https://myapp.com/**`)
+    - `http://localhost:3000/**` (allows all local callback paths)
+    - `http://localhost:3000/auth/reset-password` (password reset callback)
+    - For production, add your production URLs as well (e.g. `https://myapp.com/**`)
 
 #### B. Email Auth Settings
 
@@ -173,7 +173,11 @@ Go to **Authentication > Email Templates** in the Supabase dashboard and update 
 <h2>Confirm your signup</h2>
 
 <p>Follow this link to confirm your email:</p>
-<p><a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email">Confirm your email</a></p>
+<p>
+	<a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email"
+		>Confirm your email</a
+	>
+</p>
 ```
 
 #### Reset Password template:
@@ -184,7 +188,12 @@ Go to **Authentication > Email Templates** in the Supabase dashboard and update 
 <h2>Reset Password</h2>
 
 <p>Follow this link to reset your password:</p>
-<p><a href="{{ .SiteURL }}/auth/reset-password?token_hash={{ .TokenHash }}&type=recovery">Reset Password</a></p>
+<p>
+	<a
+		href="{{ .SiteURL }}/auth/reset-password?token_hash={{ .TokenHash }}&type=recovery"
+		>Reset Password</a
+	>
+</p>
 ```
 
 **Option 2: Confirmation URL** - Simpler but less control:
@@ -197,6 +206,7 @@ Go to **Authentication > Email Templates** in the Supabase dashboard and update 
 ```
 
 The token hash approach is recommended because it:
+
 - Gives you explicit control over the URL structure
 - Provides better error handling capabilities
 - Is consistent with the email confirmation flow
@@ -254,11 +264,11 @@ Follow the prompts. When asked about environment variables, add them as shown in
 
 In the Vercel project settings under **Settings → Environment Variables**, add:
 
-| Variable | Value | Notes |
-| -------- | ----- | ----- |
-| `NEXT_PUBLIC_SUPABASE_URL` | `https://your-project.supabase.co` | From Supabase → Settings → API |
-| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | `eyJ...` | Publishable / anon key from Supabase → Settings → API |
-| `NEXT_PUBLIC_SITE_URL` | `https://your-app.vercel.app` | Your production URL — update after first deploy if you don't have a custom domain yet |
+| Variable                               | Value                              | Notes                                                                                 |
+| -------------------------------------- | ---------------------------------- | ------------------------------------------------------------------------------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`             | `https://your-project.supabase.co` | From Supabase → Settings → API                                                        |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | `eyJ...`                           | Publishable / anon key from Supabase → Settings → API                                 |
+| `NEXT_PUBLIC_SITE_URL`                 | `https://your-app.vercel.app`      | Your production URL — update after first deploy if you don't have a custom domain yet |
 
 Set all three variables for the **Production** environment. If you want password reset and avatar uploads to work in preview deployments too, add them to **Preview** as well (using the appropriate preview URL or a wildcard).
 
@@ -275,19 +285,21 @@ Your Supabase project needs to know about the production domain for redirects (e
 In **Supabase Dashboard → Authentication → URL Configuration**:
 
 1. Update **Site URL** to your production URL:
-   ```
-   https://your-app.vercel.app
-   ```
+
+    ```
+    https://your-app.vercel.app
+    ```
 
 2. Add your production domain to **Redirect URLs**:
-   ```
-   https://your-app.vercel.app/**
-   ```
+
+    ```
+    https://your-app.vercel.app/**
+    ```
 
 3. If you want redirects to work in Vercel preview deployments too, add a wildcard for your Vercel preview URLs:
-   ```
-   https://*-your-username.vercel.app/**
-   ```
+    ```
+    https://*-your-username.vercel.app/**
+    ```
 
 ### Step 6: Update Google OAuth (if using Google)
 
@@ -296,9 +308,10 @@ Production deployments need the production domain registered in Google Cloud Con
 In **Google Cloud Console → APIs & Services → Credentials**, edit your OAuth client:
 
 1. Under **Authorized JavaScript origins**, add:
-   ```
-   https://your-app.vercel.app
-   ```
+
+    ```
+    https://your-app.vercel.app
+    ```
 
 2. The **Authorized redirect URIs** entry (`https://YOUR_REF.supabase.co/auth/v1/callback`) does **not** need to change — it points to Supabase, not your app.
 
@@ -416,6 +429,7 @@ TOTP (Time-based One-Time Password) lets users secure their account with an auth
 ### How It Works
 
 **Enrollment** (from `/profile/totp`):
+
 1. User clicks "Enable two-factor authentication"
 2. A QR code is displayed (generated by Supabase's `mfa.enroll()`)
 3. User scans with their authenticator app, or manually enters the setup key
@@ -423,12 +437,14 @@ TOTP (Time-based One-Time Password) lets users secure their account with an auth
 5. TOTP factor is marked verified; 2FA is now active
 
 **Login with 2FA**:
+
 1. User logs in with email + password
 2. `login` server action checks `mfa.getAuthenticatorAssuranceLevel()`
 3. If `nextLevel === 'aal2'`, user is redirected to `/mfa` instead of `/dashboard`
 4. User enters 6-digit code → `mfa.challenge()` + `mfa.verify()` → redirected to `/dashboard`
 
 **Disabling 2FA** (from `/profile/totp`):
+
 1. User clicks "Disable two-factor authentication"
 2. User enters current 6-digit code to confirm
 3. `mfa.challenge()` + `mfa.verify()` elevates session to AAL2
@@ -441,11 +457,12 @@ The current proxy only checks that a session exists — it does not enforce that
 To enforce AAL2 on all protected routes, add an AAL check to `lib/supabase/proxy.ts`:
 
 ```ts
-const { data: aalData } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-if (user && aalData?.nextLevel === 'aal2' && aalData?.currentLevel !== 'aal2') {
-  const url = request.nextUrl.clone();
-  url.pathname = '/mfa';
-  return NextResponse.redirect(url);
+const { data: aalData } =
+	await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+if (user && aalData?.nextLevel === "aal2" && aalData?.currentLevel !== "aal2") {
+	const url = request.nextUrl.clone();
+	url.pathname = "/mfa";
+	return NextResponse.redirect(url);
 }
 ```
 
@@ -503,8 +520,8 @@ if (
 1. User submits the login form at `/login`
 2. The `login` server action calls `supabase.auth.signInWithPassword()`
 3. After success, `mfa.getAuthenticatorAssuranceLevel()` is checked
-   - If the user has TOTP enabled (`nextLevel === 'aal2'`), they are redirected to `/mfa`
-   - Otherwise, they go directly to `/dashboard`
+    - If the user has TOTP enabled (`nextLevel === 'aal2'`), they are redirected to `/mfa`
+    - Otherwise, they go directly to `/dashboard`
 
 ### MFA Login Flow
 
@@ -529,12 +546,13 @@ The dashboard has a sign out button that calls the `signout` server action, whic
 7. User is redirected to `/update-password` with `verified=true` query param
 8. User enters their new password and submits
 9. The `updatePassword` server action:
-   - Updates the password via `supabase.auth.updateUser()`
-   - Signs the user out (security best practice)
-   - Redirects to `/login` with a success message
+    - Updates the password via `supabase.auth.updateUser()`
+    - Signs the user out (security best practice)
+    - Redirects to `/login` with a success message
 10. User logs in with their new password
 
 **Security features:**
+
 - Single-use reset tokens
 - Token expiration (default: 1 hour)
 - Forced sign-out after password change
@@ -564,11 +582,11 @@ When a user clicks **Delete account** on the profile page:
 
 1. They're shown an inline confirmation warning (cannot be undone)
 2. On confirm, the `deleteAccount` server action runs:
-   - Verifies the user's session with `getUser()`
-   - Calls `adminClient.auth.admin.deleteUser(userId)` — this permanently removes the account from Supabase Auth
-   - The `profiles` row is deleted automatically via the `ON DELETE CASCADE` foreign key set up in the SQL migration
-   - Signs out the session
-   - Redirects to `/login` with a confirmation message
+    - Verifies the user's session with `getUser()`
+    - Calls `adminClient.auth.admin.deleteUser(userId)` — this permanently removes the account from Supabase Auth
+    - The `profiles` row is deleted automatically via the `ON DELETE CASCADE` foreign key set up in the SQL migration
+    - Signs out the session
+    - Redirects to `/login` with a confirmation message
 
 ### 3. Verify for Vercel Deployment
 
@@ -718,8 +736,8 @@ This template includes Google OAuth authentication out of the box. Follow these 
 1. Navigate to [Google Cloud Console](https://console.cloud.google.com/)
 2. Click the project dropdown in the top navigation bar
 3. Click **"New Project"**
-   - Project name: Choose a name (e.g., "My App Authentication")
-   - Click **"Create"**
+    - Project name: Choose a name (e.g., "My App Authentication")
+    - Click **"Create"**
 4. Wait for the project to be created, then select it from the project dropdown
 
 #### Step 2: Configure OAuth Consent Screen
@@ -728,12 +746,12 @@ This template includes Google OAuth authentication out of the box. Follow these 
 2. Choose **"External"** user type (unless you have Google Workspace, then choose "Internal")
 3. Click **"Create"**
 4. Fill in the required fields:
-   - **App name**: Your application name (e.g., "My Awesome App")
-   - **User support email**: Your email address
-   - **App logo**: (Optional) Upload your app logo
-   - **Application home page**: `http://localhost:3000` (update for production later)
-   - **Authorized domains**: (Leave empty for now, add your production domain later)
-   - **Developer contact information**: Your email address
+    - **App name**: Your application name (e.g., "My Awesome App")
+    - **User support email**: Your email address
+    - **App logo**: (Optional) Upload your app logo
+    - **Application home page**: `http://localhost:3000` (update for production later)
+    - **Authorized domains**: (Leave empty for now, add your production domain later)
+    - **Developer contact information**: Your email address
 5. Click **"Save and Continue"**
 6. **Scopes** screen: Click **"Save and Continue"** (default scopes are fine)
 7. **Test users** screen (for External apps): Click **"Save and Continue"**
@@ -744,38 +762,42 @@ This template includes Google OAuth authentication out of the box. Follow these 
 1. In the left sidebar, navigate to **APIs & Services** → **Credentials**
 2. Click **"Create Credentials"** → **"OAuth client ID"**
 3. Configure the OAuth client:
-   - **Application type**: Select **"Web application"**
-   - **Name**: Give it a descriptive name (e.g., "My App - Web Client")
+    - **Application type**: Select **"Web application"**
+    - **Name**: Give it a descriptive name (e.g., "My App - Web Client")
 
 4. **Authorized JavaScript origins**: Click **"Add URI"** and add:
-   ```
-   http://localhost:3000
-   ```
-   _(For production, add your production URL like `https://yourdomain.com`)_
+
+    ```
+    http://localhost:3000
+    ```
+
+    _(For production, add your production URL like `https://yourdomain.com`)_
 
 5. **Authorized redirect URIs**: Click **"Add URI"** and add:
-   ```
-   https://YOUR_PROJECT_REF.supabase.co/auth/v1/callback
-   ```
 
-   **📋 How to find YOUR_PROJECT_REF:**
-   - Go to your [Supabase Dashboard](https://supabase.com/dashboard)
-   - Select your project
-   - Look at the browser URL or **Project Settings** → **API**
-   - Your Project URL looks like: `https://abcdefghijk.supabase.co`
-   - The project ref is the subdomain: `abcdefghijk`
-   - So your redirect URI would be: `https://abcdefghijk.supabase.co/auth/v1/callback`
+    ```
+    https://YOUR_PROJECT_REF.supabase.co/auth/v1/callback
+    ```
+
+    **📋 How to find YOUR_PROJECT_REF:**
+    - Go to your [Supabase Dashboard](https://supabase.com/dashboard)
+    - Select your project
+    - Look at the browser URL or **Project Settings** → **API**
+    - Your Project URL looks like: `https://abcdefghijk.supabase.co`
+    - The project ref is the subdomain: `abcdefghijk`
+    - So your redirect URI would be: `https://abcdefghijk.supabase.co/auth/v1/callback`
 
 6. Click **"Create"**
 
 7. **Important!** A modal will appear with your credentials:
-   - **Client ID**: Copy this (looks like `123456789-abc123.apps.googleusercontent.com`)
-   - **Client Secret**: Copy this (looks like `GOCSPX-abc123xyz`)
-   - Click **"OK"** (you can always find these again in the Credentials page)
+    - **Client ID**: Copy this (looks like `123456789-abc123.apps.googleusercontent.com`)
+    - **Client Secret**: Copy this (looks like `GOCSPX-abc123xyz`)
+    - Click **"OK"** (you can always find these again in the Credentials page)
 
 #### Step 4: Note Your Credentials
 
 Keep these handy for the next step:
+
 - ✅ **Client ID**
 - ✅ **Client Secret**
 
@@ -792,14 +814,16 @@ Keep these handy for the next step:
 #### Step 2: Add Google OAuth Credentials
 
 1. In the Google provider settings, you'll see two fields:
-   - **Client ID (for OAuth)**: Paste the **Client ID** from Google Cloud Console
-   - **Client Secret (for OAuth)**: Paste the **Client Secret** from Google Cloud Console
+    - **Client ID (for OAuth)**: Paste the **Client ID** from Google Cloud Console
+    - **Client Secret (for OAuth)**: Paste the **Client Secret** from Google Cloud Console
 
 2. **Verify the Callback URL** shown on the page:
-   ```
-   https://YOUR_PROJECT_REF.supabase.co/auth/v1/callback
-   ```
-   This should match exactly what you entered in Google Cloud Console.
+
+    ```
+    https://YOUR_PROJECT_REF.supabase.co/auth/v1/callback
+    ```
+
+    This should match exactly what you entered in Google Cloud Console.
 
 3. Click **"Save"** at the bottom of the page
 
@@ -807,8 +831,8 @@ Keep these handy for the next step:
 
 1. Still in Supabase Dashboard, navigate to **Authentication** → **URL Configuration**
 2. Verify **Site URL** is set to:
-   - Development: `http://localhost:3000`
-   - Production: `https://yourdomain.com`
+    - Development: `http://localhost:3000`
+    - Production: `https://yourdomain.com`
 3. The **Redirect URLs** section should already include the wildcard pattern `http://localhost:3000/**`
 
 ### Part 3: Test Google OAuth (~30 seconds)
@@ -827,8 +851,8 @@ When deploying to production, update these settings:
 1. Go to **APIs & Services** → **Credentials**
 2. Edit your OAuth client
 3. Add your production URLs:
-   - **Authorized JavaScript origins**: Add `https://yourdomain.com`
-   - **Authorized redirect URIs**: Already has `https://YOUR_REF.supabase.co/auth/v1/callback`
+    - **Authorized JavaScript origins**: Add `https://yourdomain.com`
+    - **Authorized redirect URIs**: Already has `https://YOUR_REF.supabase.co/auth/v1/callback`
 4. Save
 
 #### Supabase Dashboard
@@ -863,6 +887,7 @@ When deploying to production, update these settings:
 **Cause:** The redirect URI in your Google OAuth client doesn't match the one Supabase is using.
 
 **Solution:**
+
 1. Go to Google Cloud Console → Credentials
 2. Edit your OAuth client
 3. Verify the redirect URI is **exactly**: `https://YOUR_PROJECT_REF.supabase.co/auth/v1/callback`
@@ -874,6 +899,7 @@ When deploying to production, update these settings:
 **Cause:** OAuth consent screen is not properly configured.
 
 **Solution:**
+
 1. Go to Google Cloud Console → **APIs & Services** → **OAuth consent screen**
 2. Verify all required fields are filled in
 3. Make sure the app is published (or you're added as a test user for External apps)
@@ -883,6 +909,7 @@ When deploying to production, update these settings:
 **Cause:** Google provider is not enabled in Supabase or credentials are missing.
 
 **Solution:**
+
 1. Go to Supabase Dashboard → **Authentication** → **Providers**
 2. Verify Google is toggled ON
 3. Verify Client ID and Client Secret are saved
@@ -893,8 +920,9 @@ When deploying to production, update these settings:
 **Cause:** Production URLs not configured in Google Cloud Console.
 
 **Solution:**
+
 1. Add your production domain to Google Cloud Console:
-   - Authorized JavaScript origins: `https://yourdomain.com`
+    - Authorized JavaScript origins: `https://yourdomain.com`
 2. Update Supabase Site URL to production domain
 3. Clear your browser cache and try again
 
@@ -919,24 +947,24 @@ Create a new component similar to `GoogleAuthButton`. For example, for GitHub:
 import { createClient } from "@/lib/supabase/client";
 
 export function GitHubAuthButton() {
-  const handleLogin = async () => {
-    const supabase = createClient();
-    await supabase.auth.signInWithOAuth({
-      provider: "github",
-      options: { redirectTo: `${location.origin}/auth/callback` },
-    });
-  };
+	const handleLogin = async () => {
+		const supabase = createClient();
+		await supabase.auth.signInWithOAuth({
+			provider: "github",
+			options: { redirectTo: `${location.origin}/auth/callback` },
+		});
+	};
 
-  return (
-    <button
-      type="button"
-      onClick={handleLogin}
-      className="flex w-full items-center justify-center gap-3 rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50 dark:hover:bg-zinc-800"
-    >
-      {/* Add GitHub icon SVG here */}
-      Continue with GitHub
-    </button>
-  );
+	return (
+		<button
+			type="button"
+			onClick={handleLogin}
+			className="flex w-full items-center justify-center gap-3 rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm font-medium text-zinc-900 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50 dark:hover:bg-zinc-800"
+		>
+			{/* Add GitHub icon SVG here */}
+			Continue with GitHub
+		</button>
+	);
 }
 ```
 
@@ -955,79 +983,79 @@ This template follows [Supabase's official security recommendations](https://sup
 ### ✅ Implemented
 
 1. **Server-side session validation with `getUser()`**
-   - Never use `getClaims()` or `getSession()` for route protection
-   - `getUser()` validates with Supabase auth servers on every request
-   - Prevents stale or invalidated sessions from accessing protected data
+    - Never use `getClaims()` or `getSession()` for route protection
+    - `getUser()` validates with Supabase auth servers on every request
+    - Prevents stale or invalidated sessions from accessing protected data
 
 2. **Input validation on all server actions**
-   - Email format validation
-   - Password length requirements (minimum 6 characters)
-   - Phone number digit count validation
-   - Display name length cap
-   - Required field validation
+    - Email format validation
+    - Password length requirements (minimum 6 characters)
+    - Phone number digit count validation
+    - Display name length cap
+    - Required field validation
 
 3. **User-friendly error messages**
-   - Maps Supabase error codes to clear, actionable messages
-   - No technical jargon exposed to users
-   - Detailed errors logged server-side for debugging
+    - Maps Supabase error codes to clear, actionable messages
+    - No technical jargon exposed to users
+    - Detailed errors logged server-side for debugging
 
 4. **Secure password reset flow**
-   - Single-use tokens with expiration
-   - Forced sign-out after password change
-   - No email enumeration protection
-   - Multiple authentication flow support (PKCE, token hash, session-based)
+    - Single-use tokens with expiration
+    - Forced sign-out after password change
+    - No email enumeration protection
+    - Multiple authentication flow support (PKCE, token hash, session-based)
 
 5. **Cookie-based session management**
-   - HTTP-only cookies (not localStorage)
-   - Automatic token refresh via middleware
-   - Server-side rendering support
-   - XSS protection
+    - HTTP-only cookies (not localStorage)
+    - Automatic token refresh via middleware
+    - Server-side rendering support
+    - XSS protection
 
 6. **TOTP two-factor authentication**
-   - Authenticator app-based (no SMS required)
-   - Unenrollment requires verifying the current TOTP code (elevates to AAL2 first)
-   - Login checks assurance level and gates dashboard access behind `/mfa`
+    - Authenticator app-based (no SMS required)
+    - Unenrollment requires verifying the current TOTP code (elevates to AAL2 first)
+    - Login checks assurance level and gates dashboard access behind `/mfa`
 
 7. **Avatar upload security**
-   - Files uploaded to per-user Storage folders (`{userId}/...`)
-   - RLS policies restrict upload/update to folder owner only
-   - File size validated client-side (max 2MB)
-   - Only PNG, JPEG, and WebP accepted
+    - Files uploaded to per-user Storage folders (`{userId}/...`)
+    - RLS policies restrict upload/update to folder owner only
+    - File size validated client-side (max 2MB)
+    - Only PNG, JPEG, and WebP accepted
 
 ### 📋 Recommended Additional Steps
 
 1. **Enable Row Level Security (RLS)** on all database tables
-   - Example policy:
-     ```sql
-     CREATE POLICY "Users can only access their own data"
-     ON your_table
-     FOR ALL
-     USING (auth.uid() = user_id);
-     ```
+    - Example policy:
+        ```sql
+        CREATE POLICY "Users can only access their own data"
+        ON your_table
+        FOR ALL
+        USING (auth.uid() = user_id);
+        ```
 
 2. **Set up rate limiting** in Supabase dashboard
-   - Limit login attempts per IP
-   - Limit signup requests per IP
-   - Limit password reset requests
+    - Limit login attempts per IP
+    - Limit signup requests per IP
+    - Limit password reset requests
 
 3. **Enable email confirmation** for production
-   - Go to **Authentication > Providers > Email**
-   - Toggle "Confirm email" to ON
+    - Go to **Authentication > Providers > Email**
+    - Toggle "Confirm email" to ON
 
 4. **Use environment-specific redirect URLs**
-   - Maintain separate allowlists for development and production
-   - Never allow wildcards in production
+    - Maintain separate allowlists for development and production
+    - Never allow wildcards in production
 
 5. **Enforce AAL2 for all protected routes** (if using TOTP 2FA)
-   - Add an assurance level check to `lib/supabase/proxy.ts` (see [TOTP 2FA Setup](#totp-2fa-setup))
+    - Add an assurance level check to `lib/supabase/proxy.ts` (see [TOTP 2FA Setup](#totp-2fa-setup))
 
 6. **Monitor authentication events**
-   - Set up logging for failed login attempts
-   - Alert on suspicious activity patterns
+    - Set up logging for failed login attempts
+    - Alert on suspicious activity patterns
 
 7. **Implement CAPTCHA** for public forms (optional)
-   - Add to signup, login, and password reset forms
-   - Prevents automated abuse
+    - Add to signup, login, and password reset forms
+    - Prevents automated abuse
 
 ---
 
@@ -1040,7 +1068,7 @@ This template follows [Supabase's official security recommendations](https://sup
 - ✅ **TOTP two-factor authentication** – Already implemented
 - **Additional OAuth providers** – Add GitHub, Microsoft, Twitter, etc. (see [Add Other OAuth Providers](#add-other-oauth-providers-github-microsoft-etc) above)
 - ✅ **Enforce AAL2 globally** – Already implemented (middleware enforces TOTP verification on all protected routes)
-- **Session management** – Show users active sessions and allow them to revoke access
+- ✅ **Session management** – Show users active sessions and allow them to revoke access
 - ✅ **Account deletion** – Already implemented (permanent self-serve deletion via Admin API)
 - **Magic link authentication** – Passwordless login via email links
 - **SMS 2FA** – Phone-based OTP (requires an SMS provider like Twilio configured in Supabase)
