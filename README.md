@@ -36,7 +36,14 @@ A minimal, cloneable boilerplate for Next.js 16 with Supabase authentication. In
 │   ├── server.ts                # Server client (for server components/actions)
 │   └── proxy.ts                 # updateSession() helper for the proxy
 ├── app/
-│   ├── actions.ts                        # Server actions: login, signup, signout, profile, MFA, etc.
+│   ├── actions/
+│   │   ├── index.ts                      # Barrel re-export (all actions importable from @/app/actions)
+│   │   ├── utils.ts                      # Shared helpers: validation, auth checks, error mapping
+│   │   ├── auth.ts                       # login, signup, signout
+│   │   ├── profile.ts                    # updateProfile, updateEmail, updateAvatar, updatePhone
+│   │   ├── password.ts                   # requestPasswordReset, sendPasswordReset, updatePassword
+│   │   ├── sessions.ts                   # revokeSession, revokeOtherSessions
+│   │   └── account.ts                    # deleteAccount
 │   ├── components/
 │   │   ├── google-auth-button.tsx        # Google OAuth login button (client component)
 │   │   ├── avatar-upload.tsx             # Avatar upload with Storage (client component)
@@ -68,7 +75,13 @@ A minimal, cloneable boilerplate for Next.js 16 with Supabase authentication. In
 | `lib/supabase/proxy.ts`                    | `updateSession()` – creates server client, calls `getUser()` to verify session, redirects unauthenticated users to `/login` on protected paths.                             |
 | `lib/supabase/server.ts`                   | Server Supabase client (used in Server Components and server actions).                                                                                                      |
 | `lib/supabase/client.ts`                   | Browser Supabase client (for client components, used by OAuth and MFA flows).                                                                                               |
-| `app/actions.ts`                           | Server actions: `login`, `signup`, `signout`, `requestPasswordReset`, `updatePassword`, `updateProfile`, `updateEmail`, `updatePhone`, `updateAvatar`, `sendPasswordReset`. |
+| `app/actions/`                             | Server actions, split by domain. Barrel `index.ts` re-exports everything so imports use `@/app/actions`. |
+| `app/actions/utils.ts`                     | Shared helpers: validation (`isValidEmail`, `isValidPassword`), `requireAuth()`, `mapSupabaseError()`, `rethrowIfRedirect()`. |
+| `app/actions/auth.ts`                      | `login`, `signup`, `signout`. |
+| `app/actions/profile.ts`                   | `updateProfile`, `updateEmail`, `updateAvatar`, `updatePhone`. |
+| `app/actions/password.ts`                  | `requestPasswordReset`, `sendPasswordReset`, `updatePassword`. |
+| `app/actions/sessions.ts`                  | `revokeSession`, `revokeOtherSessions`. |
+| `app/actions/account.ts`                   | `deleteAccount` (uses admin client). |
 | `app/components/google-auth-button.tsx`    | Google OAuth login button component; handles OAuth flow with `signInWithOAuth()`.                                                                                           |
 | `app/components/avatar-upload.tsx`         | Client component; validates file size, uploads to Supabase Storage, calls `updateAvatar` server action.                                                                     |
 | `app/components/mfa-challenge.tsx`         | Client component; `listFactors` → `challenge` → `verify` → redirect to `/dashboard`. Used on the `/mfa` page after password login.                                          |
@@ -104,7 +117,7 @@ Then copy these files into your project:
 
 1. `lib/supabase/client.ts`, `lib/supabase/server.ts`, `lib/supabase/proxy.ts`
 2. `proxy.ts` (root level)
-3. `app/actions.ts`
+3. `app/actions/` (the entire directory)
 4. `app/login/page.tsx`, `app/signup/page.tsx`
 5. `app/auth/confirm/route.ts`
 6. `app/dashboard/page.tsx` (or adapt for your own protected page)
