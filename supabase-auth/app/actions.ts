@@ -403,6 +403,60 @@ export async function updatePassword(formData: FormData) {
   redirect("/login?message=Password updated successfully. Please log in with your new password.");
 }
 
+export async function revokeSession(sessionId: string) {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      redirect("/login");
+    }
+
+    const { error } = await supabase.rpc("delete_user_session", {
+      session_id: sessionId,
+    });
+
+    if (error) {
+      console.error("Session revocation error:", error);
+      redirect(`/profile/sessions?error=${encodeURIComponent("Could not revoke session. Please try again.")}`);
+    }
+
+    redirect("/profile/sessions?message=Session revoked successfully");
+  } catch (err) {
+    rethrowIfRedirect(err);
+    console.error("Unexpected error in revokeSession:", err);
+    redirect(`/profile/sessions?error=${encodeURIComponent("An unexpected error occurred. Please try again.")}`);
+  }
+}
+
+export async function revokeOtherSessions() {
+  try {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (!user) {
+      redirect("/login");
+    }
+
+    const { error } = await supabase.auth.signOut({ scope: "others" });
+
+    if (error) {
+      console.error("Sign out others error:", error);
+      redirect(`/profile/sessions?error=${encodeURIComponent("Could not sign out other sessions. Please try again.")}`);
+    }
+
+    redirect("/profile/sessions?message=Signed out of all other sessions");
+  } catch (err) {
+    rethrowIfRedirect(err);
+    console.error("Unexpected error in revokeOtherSessions:", err);
+    redirect(`/profile/sessions?error=${encodeURIComponent("An unexpected error occurred. Please try again.")}`);
+  }
+}
+
 export async function deleteAccount() {
   try {
     const supabase = await createClient();
