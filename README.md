@@ -167,7 +167,7 @@ Go to **Authentication > Providers** and ensure **Email** is enabled:
 
 - ✅ Enable email provider
 - ✅ Confirm email (recommended for production)
-- Set **Minimum Password Length** to `6` or higher
+- Set **Minimum Password Length** to `8` or higher (matches the app's enforced minimum)
 
 #### C. Email Rate Limiting (Optional)
 
@@ -463,21 +463,9 @@ TOTP (Time-based One-Time Password) lets users secure their account with an auth
 3. `mfa.challenge()` + `mfa.verify()` elevates session to AAL2
 4. `mfa.unenroll()` removes the factor
 
-### A Note on AAL Enforcement
+### AAL Enforcement
 
-The current proxy only checks that a session exists — it does not enforce that users with 2FA enrolled must be at AAL2 to access protected routes. In the normal login flow, users with TOTP are always redirected through `/mfa`, but a user who bypasses login (e.g. via a direct URL) could still access routes at AAL1.
-
-To enforce AAL2 on all protected routes, add an AAL check to `lib/supabase/proxy.ts`:
-
-```ts
-const { data: aalData } =
-	await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-if (user && aalData?.nextLevel === "aal2" && aalData?.currentLevel !== "aal2") {
-	const url = request.nextUrl.clone();
-	url.pathname = "/mfa";
-	return NextResponse.redirect(url);
-}
-```
+AAL2 is enforced globally in `lib/supabase/proxy.ts`. Every request to a protected route checks `mfa.getAuthenticatorAssuranceLevel()` — if a user has TOTP enrolled but hasn't completed the MFA challenge yet, they are redirected to `/mfa` regardless of how they reached the route. This means bypassing the login page (e.g. via a direct URL with an AAL1 session) still results in a redirect to `/mfa` before any protected content is served.
 
 ---
 
@@ -560,7 +548,7 @@ The dashboard has a sign out button that calls the `signout` server action, whic
 8. User enters their new password and submits
 9. The `updatePassword` server action:
     - Updates the password via `supabase.auth.updateUser()`
-    - Signs the user out (security best practice)
+    - Signs the user out of **all** active sessions globally (`scope: 'global'`) — invalidates any compromised sessions on all devices
     - Redirects to `/login` with a success message
 10. User logs in with their new password
 
@@ -568,8 +556,8 @@ The dashboard has a sign out button that calls the `signout` server action, whic
 
 - Single-use reset tokens
 - Token expiration (default: 1 hour)
-- Forced sign-out after password change
-- No email enumeration (always shows success message even if email doesn't exist)
+- Global sign-out on password change (all sessions on all devices are invalidated)
+- No email enumeration (password reset always shows a success message regardless of whether the email is registered)
 
 ---
 
@@ -1002,7 +990,7 @@ This template follows [Supabase's official security recommendations](https://sup
 
 2. **Input validation on all server actions**
     - Email format validation
-    - Password length requirements (minimum 6 characters)
+    - Password length requirements (minimum 8 characters)
     - Phone number digit count validation
     - Display name length cap
     - Required field validation
@@ -1015,7 +1003,7 @@ This template follows [Supabase's official security recommendations](https://sup
 4. **Secure password reset flow**
     - Single-use tokens with expiration
     - Forced sign-out after password change
-    - No email enumeration protection
+    - Email enumeration protection (unknown email returns the same response as wrong password)
     - Multiple authentication flow support (PKCE, token hash, session-based)
 
 5. **Cookie-based session management**
@@ -1060,7 +1048,7 @@ This template follows [Supabase's official security recommendations](https://sup
     - Never allow wildcards in production
 
 5. **Enforce AAL2 for all protected routes** (if using TOTP 2FA)
-    - Add an assurance level check to `lib/supabase/proxy.ts` (see [TOTP 2FA Setup](#totp-2fa-setup))
+    - Already implemented in `lib/supabase/proxy.ts` — the middleware checks assurance level on every protected request
 
 6. **Monitor authentication events**
     - Set up logging for failed login attempts

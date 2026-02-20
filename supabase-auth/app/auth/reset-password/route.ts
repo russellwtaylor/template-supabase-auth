@@ -1,6 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
+import { isValidEmailOtpType } from "@/app/actions/utils";
 import { redirect } from "next/navigation";
-import { type EmailOtpType } from "@supabase/supabase-js";
 import { type NextRequest } from "next/server";
 
 export async function GET(request: NextRequest) {
@@ -8,13 +8,6 @@ export async function GET(request: NextRequest) {
 	const token_hash = searchParams.get("token_hash");
 	const type = searchParams.get("type");
 	const code = searchParams.get("code");
-
-	console.log("Reset password route - Received params:", {
-		hasTokenHash: !!token_hash,
-		hasType: !!type,
-		hasCode: !!code,
-		type,
-	});
 
 	const supabase = await createClient();
 
@@ -27,12 +20,11 @@ export async function GET(request: NextRequest) {
 			redirect("/login?error=Invalid or expired reset link");
 		}
 
-		console.log("Code exchanged successfully");
 		redirect("/update-password?verified=true");
 	}
 
 	// Handle token hash flow (token_hash + type parameters)
-	if (token_hash && type) {
+	if (token_hash && isValidEmailOtpType(type)) {
 		// Sign out any existing session first to prevent conflicts with OTP verification.
 		// This is especially important for OAuth-only users (e.g. Google sign-in) who are
 		// setting a password for the first time — the active OAuth session can cause verifyOtp
@@ -42,7 +34,7 @@ export async function GET(request: NextRequest) {
 
 		const { error } = await supabase.auth.verifyOtp({
 			token_hash,
-			type: type as EmailOtpType,
+			type,
 		});
 
 		if (error) {
@@ -50,21 +42,18 @@ export async function GET(request: NextRequest) {
 			redirect("/login?error=Invalid or expired reset link");
 		}
 
-		console.log("Token verified successfully");
 		redirect("/update-password?verified=true");
 	}
 
 	// If no parameters, check if there's already an active session
 	// (this happens when using {{ .ConfirmationURL }} in email template)
 	const {
-		data: { session },
-	} = await supabase.auth.getSession();
+		data: { user },
+	} = await supabase.auth.getUser();
 
-	if (session) {
-		console.log("Active session found, redirecting to update-password");
+	if (user) {
 		redirect("/update-password?verified=true");
 	}
 
-	console.error("No valid authentication method found");
 	redirect("/login?error=Invalid reset link");
 }

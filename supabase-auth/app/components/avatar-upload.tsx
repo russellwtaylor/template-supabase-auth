@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 import { updateAvatar } from "@/app/actions";
 
@@ -22,6 +23,16 @@ export default function AvatarUpload({
 		const file = e.target.files?.[0];
 		if (!file) return;
 
+		const ALLOWED_TYPES = new Set([
+			"image/png",
+			"image/jpeg",
+			"image/webp",
+		]);
+		if (!ALLOWED_TYPES.has(file.type)) {
+			setError("Only PNG, JPG, and WebP images are allowed");
+			return;
+		}
+
 		if (file.size > 2 * 1024 * 1024) {
 			setError("File must be smaller than 2MB");
 			return;
@@ -30,8 +41,8 @@ export default function AvatarUpload({
 		setError(null);
 		setUploading(true);
 
-		const ext = file.name.split(".").pop();
-		const path = `${userId}/${Date.now()}.${ext}`;
+		const ext = file.type.split("/")[1] === "jpeg" ? "jpg" : file.type.split("/")[1];
+		const path = `${userId}/${crypto.randomUUID()}.${ext}`;
 
 		const supabase = createClient();
 		const { data, error: uploadError } = await supabase.storage
@@ -67,11 +78,12 @@ export default function AvatarUpload({
 				aria-label="Upload avatar"
 			>
 				{previewUrl ? (
-					// eslint-disable-next-line @next/next/no-img-element
-					<img
+					<Image
 						src={previewUrl}
 						alt="Avatar"
-						className="h-full w-full object-cover"
+						fill
+						sizes="96px"
+						className="object-cover"
 					/>
 				) : (
 					<span className="flex h-full w-full items-center justify-center text-2xl font-semibold text-zinc-500 dark:text-zinc-300">

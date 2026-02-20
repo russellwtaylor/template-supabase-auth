@@ -1,13 +1,13 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import type { SupabaseClient, User } from "@supabase/supabase-js";
+import type { SupabaseClient, User, EmailOtpType } from "@supabase/supabase-js";
 
 // ---------------------------------------------------------------------------
 // Validation
 // ---------------------------------------------------------------------------
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const MIN_PASSWORD_LENGTH = 6;
+export const MIN_PASSWORD_LENGTH = 8;
 const MAX_DISPLAY_NAME_LENGTH = 100;
 const PHONE_DIGITS_MIN = 7;
 const PHONE_DIGITS_MAX = 15;
@@ -18,6 +18,48 @@ export function isValidEmail(email: string): boolean {
 
 export function isValidPassword(password: string): boolean {
 	return password.length >= MIN_PASSWORD_LENGTH;
+}
+
+// ---------------------------------------------------------------------------
+// Redirect-target validation (prevents open redirects)
+// ---------------------------------------------------------------------------
+
+export function safeRedirectPath(
+	value: string | null,
+	fallback = "/dashboard",
+): string {
+	if (!value || !value.startsWith("/") || value.startsWith("//")) {
+		return fallback;
+	}
+	return value;
+}
+
+// ---------------------------------------------------------------------------
+// OTP type validation
+// ---------------------------------------------------------------------------
+
+const VALID_OTP_TYPES: ReadonlySet<string> = new Set([
+	"signup",
+	"invite",
+	"magiclink",
+	"recovery",
+	"email_change",
+	"email",
+]);
+
+export function isValidEmailOtpType(
+	value: string | null,
+): value is EmailOtpType {
+	return value !== null && VALID_OTP_TYPES.has(value);
+}
+
+// ---------------------------------------------------------------------------
+// Avatar URL validation
+// ---------------------------------------------------------------------------
+
+export function isValidAvatarUrl(url: string): boolean {
+	const expectedPrefix = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/avatars/`;
+	return url.startsWith(expectedPrefix);
 }
 
 export function isValidDisplayName(name: string): boolean {

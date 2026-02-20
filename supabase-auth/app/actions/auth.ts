@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import {
+	MIN_PASSWORD_LENGTH,
 	isValidEmail,
 	isValidPassword,
 	mapSupabaseError,
@@ -27,7 +28,13 @@ const LOGIN_ERROR_MAP: Array<[string, string]> = [
 		"Email rate limit exceeded",
 		"Too many login attempts. Please try again later",
 	],
-	["User not found", "No account found with this email"],
+	// "User not found" intentionally maps to the same message as invalid
+	// credentials to prevent account enumeration (leaking whether an email
+	// address is registered).
+	[
+		"User not found",
+		"Invalid email or password. If you signed up with Google, use the Google button above.",
+	],
 	["Invalid email", "Please enter a valid email address"],
 ];
 
@@ -85,7 +92,7 @@ const SIGNUP_ERROR_MAP: Array<[string, string]> = [
 	],
 	[
 		"Password should be at least",
-		"Password must be at least 6 characters long",
+		`Password must be at least ${MIN_PASSWORD_LENGTH} characters long`,
 	],
 	["invalid format", "Please enter a valid email address"],
 	["Invalid email", "Please enter a valid email address"],
@@ -102,6 +109,7 @@ export async function signup(formData: FormData) {
 
 	const email = formData.get("email") as string;
 	const password = formData.get("password") as string;
+	const confirmPassword = formData.get("confirmPassword") as string;
 
 	if (!email || !password) {
 		redirectWithError(
@@ -123,8 +131,12 @@ export async function signup(formData: FormData) {
 		redirectWithError(
 			"/signup",
 			"error",
-			"Password must be at least 6 characters long",
+			`Password must be at least ${MIN_PASSWORD_LENGTH} characters long`,
 		);
+	}
+
+	if (password !== confirmPassword) {
+		redirectWithError("/signup", "error", "Passwords do not match");
 	}
 
 	const { error } = await supabase.auth.signUp({ email, password });

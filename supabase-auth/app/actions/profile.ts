@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import {
+	isValidAvatarUrl,
 	isValidEmail,
 	isValidDisplayName,
 	isValidPhone,
@@ -117,19 +118,38 @@ export async function updateEmail(formData: FormData) {
 // ---------------------------------------------------------------------------
 
 export async function updateAvatar(avatarUrl: string) {
-	const { supabase, user } = await requireAuth();
+	try {
+		if (!isValidAvatarUrl(avatarUrl)) {
+			redirectWithError("/profile", "error", "Invalid avatar URL");
+		}
 
-	const { error } = await supabase.from("profiles").upsert({
-		id: user.id,
-		avatar_url: avatarUrl,
-		updated_at: new Date().toISOString(),
-	});
+		const { supabase, user } = await requireAuth();
 
-	if (error) {
-		console.error("Avatar update error:", error);
+		const { error } = await supabase.from("profiles").upsert({
+			id: user.id,
+			avatar_url: avatarUrl,
+			updated_at: new Date().toISOString(),
+		});
+
+		if (error) {
+			console.error("Avatar update error:", error);
+			redirectWithError(
+				"/profile",
+				"error",
+				"Could not update avatar. Please try again.",
+			);
+		}
+
+		revalidatePath("/profile", "page");
+	} catch (err) {
+		rethrowIfRedirect(err);
+		console.error("Unexpected error in updateAvatar:", err);
+		redirectWithError(
+			"/profile",
+			"error",
+			"An unexpected error occurred. Please try again.",
+		);
 	}
-
-	revalidatePath("/profile", "page");
 }
 
 // ---------------------------------------------------------------------------

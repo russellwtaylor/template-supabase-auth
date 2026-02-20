@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { login } from "@/app/actions";
 import { GoogleAuthButton } from "@/app/components/google-auth-button";
 import AuthCard from "@/app/components/ui/auth-card";
@@ -70,12 +71,12 @@ export default async function LoginPage({
 				</div>
 
 				<div className="flex justify-end">
-					<a
+					<Link
 						href="/forgot-password"
 						className="text-sm font-medium text-zinc-900 hover:underline dark:text-zinc-50"
 					>
 						Forgot password?
-					</a>
+					</Link>
 				</div>
 
 				<button
@@ -91,12 +92,12 @@ export default async function LoginPage({
 
 			<p className="text-center text-sm text-zinc-500 dark:text-zinc-400">
 				Don&apos;t have an account?{" "}
-				<a
+				<Link
 					href="/signup"
 					className="font-medium text-zinc-900 hover:underline dark:text-zinc-50"
 				>
 					Sign up
-				</a>
+				</Link>
 			</p>
 		</AuthCard>
 	);

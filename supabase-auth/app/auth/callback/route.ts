@@ -1,11 +1,12 @@
 import { createClient } from "@/lib/supabase/server";
+import { safeRedirectPath } from "@/app/actions/utils";
 import { NextResponse } from "next/server";
 import { type NextRequest } from "next/server";
 
 export async function GET(request: NextRequest) {
 	const { searchParams } = new URL(request.url);
 	const code = searchParams.get("code");
-	const next = searchParams.get("next") ?? "/dashboard";
+	const next = safeRedirectPath(searchParams.get("next"));
 
 	if (code) {
 		const supabase = await createClient();
@@ -13,17 +14,21 @@ export async function GET(request: NextRequest) {
 
 		if (error) {
 			console.error("OAuth callback error:", error);
+			const params = new URLSearchParams({
+				error: "Authentication failed. Please try again.",
+			});
 			return NextResponse.redirect(
-				`${request.nextUrl.origin}/login?error=Authentication failed. Please try again.`,
+				`${request.nextUrl.origin}/login?${params}`,
 			);
 		}
 
-		// Redirect to the next URL or dashboard
 		return NextResponse.redirect(`${request.nextUrl.origin}${next}`);
 	}
 
-	// No code present, redirect to login with error
+	const params = new URLSearchParams({
+		error: "Authentication failed. Please try again.",
+	});
 	return NextResponse.redirect(
-		`${request.nextUrl.origin}/login?error=Authentication failed. Please try again.`,
+		`${request.nextUrl.origin}/login?${params}`,
 	);
 }
