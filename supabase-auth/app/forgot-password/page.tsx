@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { requestPasswordReset } from "@/app/actions";
 import AuthCard from "@/app/components/ui/auth-card";
 import { ErrorAlert, SuccessAlert } from "@/app/components/ui/alert";
@@ -51,12 +52,12 @@ export default async function ForgotPasswordPage({
 
 			<p className="text-center text-sm text-zinc-500 dark:text-zinc-400">
 				Remember your password?{" "}
-				<a
+				<Link
 					href="/login"
 					className="font-medium text-zinc-900 hover:underline dark:text-zinc-50"
 				>
 					Log in
-				</a>
+				</Link>
 			</p>
 		</AuthCard>
 	);

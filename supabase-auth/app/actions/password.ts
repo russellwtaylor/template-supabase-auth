@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import {
+	MIN_PASSWORD_LENGTH,
 	isValidEmail,
 	isValidPassword,
 	mapSupabaseError,
@@ -87,8 +88,16 @@ export async function sendPasswordReset() {
 			);
 		}
 
+		if (!user.email) {
+			redirectWithError(
+				"/profile",
+				"error",
+				"No email address associated with this account.",
+			);
+		}
+
 		const { error } = await supabase.auth.resetPasswordForEmail(
-			user.email!,
+			user.email,
 			{
 				redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/reset-password`,
 			},
@@ -134,7 +143,7 @@ export async function sendPasswordReset() {
 const PASSWORD_UPDATE_ERROR_MAP: Array<[string, string]> = [
 	[
 		"Password should be at least",
-		"Password must be at least 6 characters long.",
+		`Password must be at least ${MIN_PASSWORD_LENGTH} characters long.`,
 	],
 	[
 		"not authenticated",
@@ -145,6 +154,7 @@ const PASSWORD_UPDATE_ERROR_MAP: Array<[string, string]> = [
 export async function updatePassword(formData: FormData) {
 	const supabase = await createClient();
 	const password = formData.get("password") as string;
+	const confirmPassword = formData.get("confirmPassword") as string;
 
 	if (!password) {
 		redirectWithError("/update-password", "error", "Password is required");
@@ -154,7 +164,15 @@ export async function updatePassword(formData: FormData) {
 		redirectWithError(
 			"/update-password",
 			"error",
-			"Password must be at least 6 characters long",
+			`Password must be at least ${MIN_PASSWORD_LENGTH} characters long`,
+		);
+	}
+
+	if (password !== confirmPassword) {
+		redirectWithError(
+			"/update-password",
+			"error",
+			"Passwords do not match",
 		);
 	}
 
@@ -170,6 +188,12 @@ export async function updatePassword(formData: FormData) {
 		redirectWithError("/update-password", "error", message);
 	}
 
+	// Sign out ALL active sessions after a password change so that any
+	// compromised session (e.g. the one that triggered the reset) is
+	// immediately invalidated on every device.
+	await supabase.auth.signOut({ scope: "global" });
 	revalidatePath("/", "layout");
-	redirect("/profile?message=Password updated successfully.");
+	redirect(
+		"/login?message=Password updated successfully. Please sign in with your new password.",
+	);
 }

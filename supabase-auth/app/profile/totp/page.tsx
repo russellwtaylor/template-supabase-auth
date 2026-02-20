@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import TotpManager from "@/app/components/totp-manager";
@@ -20,12 +21,12 @@ export default async function TotpPage() {
 	return (
 		<AuthCard>
 			<div>
-				<a
+				<Link
 					href="/profile"
 					className="text-sm text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
 				>
 					← Back to profile
-				</a>
+				</Link>
 			</div>
 			<div className="text-center">
 				<h1 className="text-2xl font-semibold tracking-tight text-zinc-900 dark:text-zinc-50">

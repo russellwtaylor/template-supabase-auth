@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -56,11 +57,6 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
 		redirect("/login");
 	}
 
-	// Upsert to handle existing users who don't have a profile row yet
-	await supabase
-		.from("profiles")
-		.upsert({ id: user.id }, { onConflict: "id", ignoreDuplicates: true });
-
 	// Fetch profile data and MFA factors in parallel
 	const [{ data: profile }, { data: factors }] = await Promise.all([
 		supabase
@@ -70,6 +66,11 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
 			.single(),
 		supabase.auth.mfa.listFactors(),
 	]);
+
+	// Create profile row on first visit (lazy initialization instead of writing every render)
+	if (!profile) {
+		await supabase.from("profiles").insert({ id: user.id });
+	}
 
 	const totpEnabled =
 		factors?.totp?.some((f) => f.status === "verified") ?? false;
@@ -230,7 +231,7 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
 				{/* Two-factor authentication */}
 				<Section>
 					<SectionLabel>Two-factor authentication</SectionLabel>
-					<a
+					<Link
 						href="/profile/totp"
 						className="flex items-center justify-between rounded-md border border-zinc-300 bg-white px-4 py-3 text-sm hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
 					>
@@ -246,13 +247,13 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
 						>
 							{totpEnabled ? "Enabled" : "Off"} →
 						</span>
-					</a>
+					</Link>
 				</Section>
 
 				{/* Active sessions */}
 				<Section>
 					<SectionLabel>Active sessions</SectionLabel>
-					<a
+					<Link
 						href="/profile/sessions"
 						className="flex items-center justify-between rounded-md border border-zinc-300 bg-white px-4 py-3 text-sm hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:hover:bg-zinc-800"
 					>
@@ -262,7 +263,7 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
 						<span className="text-zinc-400 dark:text-zinc-500">
 							→
 						</span>
-					</a>
+					</Link>
 				</Section>
 
 				{/* Connected accounts */}
@@ -368,12 +369,12 @@ export default async function ProfilePage({ searchParams }: ProfilePageProps) {
 				</Section>
 
 				<div className="mt-8 border-t border-zinc-200 pt-6 text-center dark:border-zinc-800">
-					<a
+					<Link
 						href="/dashboard"
 						className="text-sm text-zinc-500 hover:text-zinc-700 dark:text-zinc-400 dark:hover:text-zinc-200"
 					>
 						← Back to dashboard
-					</a>
+					</Link>
 				</div>
 			</div>
 		</main>

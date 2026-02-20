@@ -16,7 +16,7 @@ export default function MfaChallenge({ next }: MfaChallengeProps) {
 	const [loading, setLoading] = useState(false);
 	const router = useRouter();
 
-	async function handleSubmit(e: React.FormEvent) {
+	async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
 		e.preventDefault();
 		setLoading(true);
 		setError(null);

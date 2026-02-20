@@ -1,5 +1,7 @@
+import Link from "next/link";
 import { signup } from "@/app/actions";
 import { GoogleAuthButton } from "@/app/components/google-auth-button";
+import PasswordFields from "@/app/components/password-fields";
 import AuthCard from "@/app/components/ui/auth-card";
 import { ErrorAlert, SuccessAlert } from "@/app/components/ui/alert";
 
@@ -52,23 +54,7 @@ export default async function SignupPage({
 					/>
 				</div>
 
-				<div className="space-y-2">
-					<label
-						htmlFor="password"
-						className="text-sm font-medium text-zinc-700 dark:text-zinc-300"
-					>
-						Password
-					</label>
-					<input
-						id="password"
-						name="password"
-						type="password"
-						required
-						minLength={6}
-						className="w-full rounded-md border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 placeholder-zinc-400 focus:border-zinc-500 focus:outline-none focus:ring-1 focus:ring-zinc-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50 dark:placeholder-zinc-500"
-						placeholder="At least 6 characters"
-					/>
-				</div>
+				<PasswordFields />
 
 				<button
 					formAction={signup}
@@ -83,12 +69,12 @@ export default async function SignupPage({
 
 			<p className="text-center text-sm text-zinc-500 dark:text-zinc-400">
 				Already have an account?{" "}
-				<a
+				<Link
 					href="/login"
 					className="font-medium text-zinc-900 hover:underline dark:text-zinc-50"
 				>
 					Log in
-				</a>
+				</Link>
 			</p>
 		</AuthCard>
 	);
